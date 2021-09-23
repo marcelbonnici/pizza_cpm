@@ -1,0 +1,21 @@
+digraph "Critical path" {
+rankdir=LR
+size="8,5"
+	node [shape=box]
+	Start [label=Start]
+	Stov_On [label=Stov_On]
+	Apply_D [label=Apply_D]
+	Cheese [label=Cheese]
+	Apply_C [label=Apply_C]
+	Stov_Of [label=Stov_Of]
+	Courier [label=Courier]
+	Deliver [label=Deliver]
+	Start -> Stov_On [color=red]
+	Stov_On -> Apply_D [color=red]
+	Apply_D -> Cheese [color=red]
+	Cheese -> Stov_Of [color=red]
+	Stov_Of -> Courier [color=red]
+	Courier -> Deliver [color=red]
+	Stov_On -> Apply_C
+	Apply_C -> Stov_Of
+}
