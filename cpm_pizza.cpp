@@ -8,9 +8,7 @@
 #include <string>
 #include <stack>
 
-
-
-#define DBG 0   // set DBG 1 for debugging code and 0 for normal run
+#define DBG 1   // set DBG 1 for debugging code and 0 for normal run
 #define PLOT_GRAPH 1 // set 1 for plotting graph if system meets necessary requirements
 
 using namespace std;
@@ -32,7 +30,6 @@ std::string exec(const char* cmd) {
     }
     return result;
 }
-
 
 // returns vector of n numbers for input
 std::vector<int> ReadNumbers()
@@ -63,25 +60,19 @@ void topologicalSortUtil(int v, vector<bool> &visited,  stack<int> &Stack, vecto
     Stack.push(v);
 }
 
-
 int main() {
-
+	int MAX=10;
 	vector<string> name1;
 	vector<int> duration1;
-
-	int i=0, n_tasks=0, top=0, j=0, items = 0;
+	vector<string> foodcombo;
+	bool cheese_passed=false;
+	int i=0, n_tasks=0, top=0, j=0, items = 0, tweak = 0;
 	ofstream f; //means by which we can open external files
 	f.open("plot_graph.plt");
 
 	cout<<"############## Critical Path management ################\n\n";
 	cout<<"How many items will you be ordering today? ";
 	cin>>items;
-	//Ocin>>n_tasks; // n_tasks is the number of tasks
-
-	//thatsucks
-
-
-	//thatsucks
 
 	//nodes[n_tasks+1].name = "Finish";
 	//nodes[n_tasks+1].duration = 0;
@@ -95,26 +86,56 @@ int main() {
 
 	// input of all the tasks
 	for(i = 1 ; i <= items; i++) {
-		cout<<"\n\nDish #"<<i<<" - Enter (0) for Pizza, (1) for Cookie, or (2) for Calzone : ";
+		cout<<"\n\nDish #"<<i<<" - Enter (0) for Pizza, (1) for Calzone, (2) for Grilled Cheese : ";
 		std::string foodnumber;
 		std::cin >> foodnumber;
 
 		if (foodnumber == "0"){
+			//foodcombo.push_back("0");
+			tweak++;
+			name1.push_back("RemoveD");
+			duration1.push_back(2);
 			name1.push_back("Cheese");
 			duration1.push_back(4);
 			name1.push_back("Apply_D");
 			duration1.push_back(1);
-			n_tasks=n_tasks+2;
+			n_tasks=n_tasks+3;
 		}
 		else if (foodnumber=="1"){
-			name1.push_back("Apply_C");
+			//foodcombo.push_back("1");
+			name1.push_back("RemoveZ");
 			duration1.push_back(2);
-			n_tasks++;
-		}
-		else if (foodnumber=="2"){
 			name1.push_back("Apply_Z");
 			duration1.push_back(3);
-			n_tasks++;
+			n_tasks=n_tasks+2;
+		}
+		else if (foodnumber=="2"){
+			if (tweak==1){
+				name1.pop_back();
+				duration1.pop_back();
+				name1.pop_back();
+				duration1.pop_back();
+				name1.pop_back();
+				duration1.pop_back();
+			}
+			tweak=tweak+2;
+			name1.push_back("RemoveB");
+			duration1.push_back(2);
+			name1.push_back("Apply_B");
+			duration1.push_back(8);
+			name1.push_back("Cheese");
+			duration1.push_back(4);
+			name1.push_back("Apply_B");
+			duration1.push_back(8);
+			n_tasks=n_tasks+4;
+			if (tweak==3){
+				name1.push_back("RemoveD");
+				duration1.push_back(2);
+				name1.push_back("Cheese");
+				duration1.push_back(4);
+				name1.push_back("Apply_D");
+				duration1.push_back(1);
+			}
 		}
 	}
 
@@ -122,32 +143,67 @@ int main() {
 	duration1.push_back(7);
 	n_tasks++;
 
+
 	if(PLOT_GRAPH) {
-		f<<n_tasks<<endl;
+		if (tweak==3){
+			f<<n_tasks-1<<endl;
+		}
+		else{
+			f<<n_tasks<<endl;
+		}
 		f<<"Start 0"<<endl;
 	}
 
-	struct activity nodes[n_tasks+3]; // number of activities here 0th activity is the start
-									  // and the (n+1)th activity refers to the finish. Both have duration of 0.
-
+	struct activity nodes[n_tasks+3];
 	nodes[0].name = "Start";
 	nodes[0].duration = 0;
-	nodes[n_tasks+1].name = "Delivered";
-	nodes[n_tasks+1].duration = 0;
 
-	for (int i=1; i<=n_tasks; i++){
-		nodes[i].name=name1.back();
-		name1.pop_back();
-		nodes[i].duration=duration1.back();
-		duration1.pop_back();
-
-		if(PLOT_GRAPH) {
-			f<<nodes[i].name<<" "<<nodes[i].duration<<endl;
+	if (n_tasks==MAX){
+		nodes[n_tasks].name = "Deliver";
+		nodes[n_tasks].duration = 0;
 		}
+	else{
+		nodes[n_tasks+1].name = "Deliver";
+		nodes[n_tasks+1].duration = 0;
 	}
 
-	if(PLOT_GRAPH) {
+	for (int i=1; i<=n_tasks; i++){
+			if (n_tasks==MAX){
+				if ((i==3 || i==4)&&name1.back()=="Cheese"){
+					cheese_passed=true;
+				}
+				else if(cheese_passed==true){
+					nodes[i-1].name=name1.back();
+					nodes[i-1].duration=duration1.back();
+				}
+				else{
+					nodes[i].name=name1.back();
+					nodes[i].duration=duration1.back();
+				}
+			}
+			else{
+				nodes[i].name=name1.back();
+				nodes[i].duration=duration1.back();
+			}
+		name1.pop_back();
+		duration1.pop_back();
+/*
+		if(PLOT_GRAPH) {
+			f<<nodes[i].name<<" "<<nodes[i].duration<<endl;
+		}*/
+	}
+
+	for (int i=1; i<=n_tasks; i++){
+		if(PLOT_GRAPH) {//NEW
+			f<<nodes[i].name<<" "<<nodes[i].duration<<endl;
+		} //NEW
+	}
+
+	if(PLOT_GRAPH && n_tasks!=MAX) {
 		f<<"Deliver 0"<<endl;
+	}
+	if(n_tasks==MAX){
+		n_tasks--;
 	}
 		/*
 		nodes[i].name=foodnumber;
@@ -183,20 +239,113 @@ int main() {
 		vector<int> ReadNumbers;
 		cout<<"\n\nEnter successors for task "<<nodes[i].name<<" : ";
 		if (i==1){
-			//all Start's successors have "Apply_...", so get 'em!
-			for (int j=1; j<=n_tasks; j++){
+			//all Stov_On's successors have "Apply_...", so get 'em!
+			for (int j=2; j<=n_tasks; j++){
 				if (nodes[j].name.find("Apply_") != string::npos){
-					ReadNumbers.push_back(j);
+					if(ReadNumbers.size()>0){
+						if (ReadNumbers.size()==2){
+							if (nodes[ReadNumbers[0]].name!=nodes[j].name && nodes[ReadNumbers[1]].name!=nodes[j].name){
+								ReadNumbers.push_back(j);
+							}
+						}
+						else{
+							if (nodes[ReadNumbers[0]].name!=nodes[j].name){
+								ReadNumbers.push_back(j);
+							}
+						}
+					}
+					else{//else{
+						ReadNumbers.push_back(j);
+					}
 				}
 			}
 		}
-		else if (i==0 || nodes[i].name == "Apply_D" || nodes[i].name == "Stov_Of" || nodes[i].name == "Courier" || (nodes[i].name=="Cheese" && nodes[i+1].name=="Apply_D")){//PIZZA
+		else if (i==0 || i==n_tasks || i==n_tasks-1 || i==n_tasks-2){
 			ReadNumbers.push_back(i+1);
 		}
 		else{
-			ReadNumbers.push_back(n_tasks-1);
+			if (nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Stov_Of"){
+				ReadNumbers.push_back(i+1);//0
+			}
+			else if (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Stov_Of"){
+				ReadNumbers.push_back(i+1);//1
+			}
+			else if (nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Stov_Of"){
+				ReadNumbers.push_back(i+1);//2
+			}
+			else if(nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Apply_D" && nodes[6].name=="Cheese" && nodes[7].name=="RemoveD" && nodes[8].name=="Stov_Of"){
+				ReadNumbers.push_back(i+1);//00
+			}
+			else if(nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_D" && nodes[5].name=="Cheese" && nodes[6].name=="RemoveD" && nodes[7].name=="Stov_Of"){
+				if (i!=3){
+					ReadNumbers.push_back(i+1);//01
+				}
+				else{
+					ReadNumbers.push_back(n_tasks-1);
+				}
+			}
+			else if(nodes[2].name=="Apply_B" && nodes[3].name=="Apply_B" && nodes[4].name=="RemoveB" && nodes[5].name=="Apply_D" && nodes[6].name=="Cheese" && nodes[7].name=="RemoveD" && nodes[8].name=="Stov_Of"){
+				if(i==2){
+					ReadNumbers.push_back(i+4);
+				}
+				else if (i==4){
+					ReadNumbers.push_back(n_tasks-1);
+				}
+				else if (i==6){
+					ReadNumbers.push_back(i-3);
+					ReadNumbers.push_back(i+1);
+				}
+				else{
+					ReadNumbers.push_back(i+1);//02: type 0, then 2
+					//This one causes the critical path algo to mess up somehow, so I made it act like type 2,0 through earlier code
+				}
+			}
+			else if(nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Apply_Z" && nodes[6].name=="RemoveZ" && nodes[7].name=="Stov_Of"){
+				if (i!=4){
+					ReadNumbers.push_back(i+1);//10
+				}
+				else{
+					ReadNumbers.push_back(n_tasks-1);
+				}
+			}
+			else if(nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_Z" && nodes[5].name=="RemoveZ" && nodes[6].name=="Stov_Of"){
+				ReadNumbers.push_back(i+1);//11
+			}
+			else if(nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Apply_Z" && nodes[7].name=="RemoveZ" && nodes[8].name=="Stov_Of"){
+				if (i!=5){
+					ReadNumbers.push_back(i+1);//12: Type 1, then 2. Conditional looks more like the opposite (21), as do all the conditonals under this "else"
+				}
+				else{
+					ReadNumbers.push_back(n_tasks-1);
+				}
+			}
+			else if(nodes[2].name=="Apply_D" && nodes[3].name=="RemoveD" && nodes[4].name=="Apply_B" && nodes[5].name=="Cheese" && nodes[6].name=="Apply_B" && nodes[7].name=="RemoveB" && nodes[8].name=="Stov_Of"){
+				if(i==2){
+					ReadNumbers.push_back(i+3);
+				}
+				else if (i==3){
+					ReadNumbers.push_back(n_tasks-1);
+				}
+				else if (i==5){
+					ReadNumbers.push_back(i-2);
+					ReadNumbers.push_back(i+1);
+				}
+				else{
+					ReadNumbers.push_back(i+1);//20: type 2, then 0
+				}
+			}
+			else if(nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_B" && nodes[5].name=="Cheese" && nodes[6].name=="Apply_B" && nodes[7].name=="RemoveB" && nodes[8].name=="Stov_Of"){
+				if (i!=3){
+					ReadNumbers.push_back(i+1);//21: Type 2, then 1. Conditional looks more like the opposite (12), as do all the conditonals under this "else"
+				}
+				else{
+					ReadNumbers.push_back(n_tasks-1);
+				}
+			}
+			else if(nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Apply_B" && nodes[7].name=="Cheese" && nodes[8].name=="Apply_B" && nodes[9].name=="RemoveB" && nodes[10].name=="Stov_Of"){
+				ReadNumbers.push_back(i+1);//22: Type 2, then 1. Conditional looks more like the opposite (12), as do all the conditonals under this "else"
+			}
 		}
-
 		vector<int> temp = ReadNumbers;//();
 		if(temp.size()==0){
 			adj[i].push_back(n_tasks);
@@ -209,15 +358,20 @@ int main() {
 		if(temp.size()!=0) {
 			for(int j=0; j<temp.size(); j++)
 				adj[i].push_back(temp[j]);
-			for(int j=0;j < temp.size(); j++)
+			for(int j=0;j < temp.size(); j++){
+				if(temp[j]==temp.size()){
+						vector<int> yikes;
+						adj.push_back(yikes);
+						pred.push_back(yikes);
+				}
 				pred[temp[j]].push_back(i);
+			}
 			if(PLOT_GRAPH) {
 				for(int j=0;j<temp.size();j++){
 					f<<i<<" "<<temp[j]<<endl;
 				}
 			}
 		}
-
 	}
 	f<<"quit"<<endl;
 	if(DBG) {
