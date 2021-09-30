@@ -35,8 +35,10 @@ struct cpmStart {
 };
 
 typedef struct cpmStart Struct;
+typedef struct activity Struct1;
 Struct cpm_input(ofstream &f);
 Struct foodnodes(Struct super, string foodnumber, int tweak, vector<string> name1, vector<int> duration1, int n_tasks);
+Struct1* start_end_nodes(int n_tasks, Struct1 *nodes);
 
 int main() {
 	bool cheese_passed=false;
@@ -49,18 +51,9 @@ int main() {
 	vector<int> duration1 = superduper.duration1;
 	int n_tasks = superduper.n_tasks;
 
-	struct activity nodes[n_tasks+3];
-	nodes[0].name = "Start";
-	nodes[0].duration = 0;
-
-	if (n_tasks==10){
-		nodes[n_tasks].name = "Deliver";
-		nodes[n_tasks].duration = 0;
-		}
-	else{
-		nodes[n_tasks+1].name = "Deliver";
-		nodes[n_tasks+1].duration = 0;
-	}
+	Struct1 *nodes = new Struct1 [n_tasks+2];
+	//struct activity nodes[n_tasks+2];
+	nodes = start_end_nodes(n_tasks, nodes);
 
 	for (int i=1; i<=n_tasks; i++){
 			if (n_tasks==10){
@@ -82,7 +75,6 @@ int main() {
 			}
 		name1.pop_back();
 		duration1.pop_back();
-
 	}
 
 	for (int i=1; i<=n_tasks; i++){
@@ -369,6 +361,7 @@ int main() {
 	f<<endl;
 	f.close();
 	exec("python3 plot_graph2.py < plot_graph.plt");
+	delete[] nodes;
 	return 0;
 }
 
@@ -467,4 +460,18 @@ Struct foodnodes(Struct fantastico, string foodnumber, int tweak, vector<string>
 	fantastico.tweak = tweak;
 	fantastico.n_tasks = n_tasks;
 	return fantastico;
+}
+
+Struct1* start_end_nodes(int n_tasks, Struct1 *nodes){
+	nodes[0].name = "Start";
+	nodes[0].duration = 0;
+	if (n_tasks==10){
+		nodes[n_tasks].name = "Deliver";
+		nodes[n_tasks].duration = 0;
+		}
+	else{
+		nodes[n_tasks+1].name = "Deliver";
+		nodes[n_tasks+1].duration = 0;
+	}
+	return nodes;
 }
