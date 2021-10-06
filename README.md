@@ -1,15 +1,13 @@
 # Critical Path Management for Pizza Delivery Tracking
----
 This project takes a customer's order and generates an ordered list of when each ingredient will be assembled. Best of all, the program estimates the delivery time based on the longest path of steps from start to finish, called the critical path. To make things clearer, a pizza parlor robot was built to actually make and deliver customers' orders, as seen in the video below (to be filmed).
 
 ## Motivation
 I realized C++ was a language I needed to hone as a roboticist, so I left Python on the back burner (pun absolutely intended) to put my data structure and algorithm skills to the test. I also wanted to make something related to food automation, which is my hobby per my [LEGO vending machines on YouTube](youtube.com/astonishingstudios), and critical path management was the best concept to unite my software skills and pastime.
 
-## Video Demonstration
+## Video Demonstration (to be filmed)
 [![Pizza Delivery Tracking](README-images/tbf.png)](https://youtube.com/)
 
 ## Getting Started
----
 ### Requirements
 The code files require:
 1. [Python 3](https://www.python.org/downloads/)
@@ -58,7 +56,6 @@ Clearly, one enters any of the three numbers to select that item, and entering t
 From here, the **results table**, **critical path** and **Activity-On-Node diagram** are generated, and the robot begins preparing the customer's order.
 
 ## Understanding the Outputs
----
 ### Table
 This neatly details the duration of each state, and more importantly, when each one can start and end without disrupting the delivery time.
 
