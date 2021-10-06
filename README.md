@@ -101,7 +101,3 @@ For instance, the first sub-vector with no non-visited nodes to be reached will 
 The algorithm is also run on a 2D vector listing all the predecessor nodes, `pred`, instead of `adj`, and starts at index `pred.size()-1` instead of `0` since each index holds the numerical value of its predecessor(s). The stack from topologically sorting the `adj` vector is used to find the LS & LF times. Meanwhile, the `pred` stack helps determine the ES & EF times, yielding all the calculations needed to form the Activity-On-Node Diagram!
 ## Future Possibilities
 Increasing the number of items on the menu, namely ones that overlap in their ingredients (ex: a rigatoni salad and a cheesy pasta), would create more intricate critical path charts. Consequently, the  ability of critical path management to highlight the longest path amid a mess of nodes and edges could be more deeply appreciated.
-
-## To Be Added
-This serves as a note to self on what needs to be added to this README before I am confident sharing this beyond people peeking at my GitHub account.
-* States machine
