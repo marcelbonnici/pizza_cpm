@@ -25,6 +25,7 @@ std::string exec(const char* cmd) {
     return result;
 }
 
+// This function courtesy of https://github.com/suman95/Critical-path-management
 void topologicalSortUtil(int v, vector<bool> &visited,  stack<int> &Stack, vector< vector<int> > &adj);
 
 struct cpmStart {
@@ -52,9 +53,9 @@ int main() {
 	int n_tasks = superduper.n_tasks;
 
 	Struct1 *nodes = new Struct1 [n_tasks+2];
-	//struct activity nodes[n_tasks+2];
 	nodes = start_end_nodes(n_tasks, nodes);
 
+	//FCTN: task_nodes
 	for (int i=1; i<=n_tasks; i++){
 			if (n_tasks==10){
 				if ((i==3 || i==4)&&name1.back()=="Cheese"){
@@ -77,6 +78,8 @@ int main() {
 		duration1.pop_back();
 	}
 
+	//FCTN: nodes_to_plt
+	//Courtesy of https://github.com/suman95/Critical-path-management
 	for (int i=1; i<=n_tasks; i++){
 		f<<nodes[i].name<<" "<<nodes[i].duration<<endl;
 	}
@@ -88,30 +91,34 @@ int main() {
 		n_tasks--;
 	}
 
-	cout<<"\n\n\t\tTasks entered :\n";
-	for(int i = 0 ; i <= n_tasks+1; i++) { //upper limit could be i < n_tasks+2, no?
-		cout<<"\t\t"<<i<<". "<<nodes[i].name<<" "<<nodes[i].duration<<endl;
+	//FCTN: tasks_print
+	//Courtesy of https://github.com/suman95/Critical-path-management
+	if (DBG){
+		cout<<"\n\n\t\tTasks entered :\n";
+		for(int i = 0 ; i <= n_tasks+1; i++) { //upper limit could be i < n_tasks+2, no?
+			cout<<"\t\t"<<i<<". "<<nodes[i].name<<" "<<nodes[i].duration<<endl;
+		}
 	}
 
+	//FCTN: make_adj_pred
+	//Courtesy of https://github.com/suman95/Critical-path-management
 	vector< vector<int> > adj;  // adj represents sucessor list
 	vector< vector<int> > pred; // pred reperesents predecessor list
-
-
 	// initialization of both lists with empty vectors
 	for(int i = 0 ; i <= n_tasks; i++) {
-		vector<int> temp;
-		adj.push_back(temp);
-		pred.push_back(temp);
+		vector<int> temp; adj.push_back(temp); pred.push_back(temp);
 	}
 
+	//FCTN: make_edges
 	// initialization of successor list based on user input
 	// NOTE : User need to input all the tasks with no predecessors as the successor of "Start"
 	cout<<"\n\nNOTE : User need to input all the tasks with no predecessors as the successor of \"Start\"";
 	for(int i = 0 ; i <= n_tasks; i++) {
 		vector<int> ReadNumbers;
-		cout<<"\n\nEnter successors for task "<<nodes[i].name<<" : ";
+		//cout<<"\n\nEnter successors for task "<<nodes[i].name<<" : ";
+
 		if (i==1){
-			//all Stov_On's successors have "Apply_...", so get 'em!
+			//FCTN: make_stov_on_edges
 			for (int j=2; j<=n_tasks; j++){
 				if (nodes[j].name.find("Apply_") != string::npos){
 					if(ReadNumbers.size()>0){
@@ -136,88 +143,69 @@ int main() {
 			ReadNumbers.push_back(i+1);
 		}
 		else{
-			if (nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Stov_Of"){
-				ReadNumbers.push_back(i+1);//0
-			}
-			else if (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Stov_Of"){
-				ReadNumbers.push_back(i+1);//1
-			}
-			else if (nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Stov_Of"){
-				ReadNumbers.push_back(i+1);//2
-			}
-			else if(nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Apply_D" && nodes[6].name=="Cheese" && nodes[7].name=="RemoveD" && nodes[8].name=="Stov_Of"){
-				ReadNumbers.push_back(i+1);//00
-			}
+			//FCTN: make_middle_nodes
+			if ((nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Stov_Of")
+			|| (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Stov_Of")
+			|| (nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Stov_Of")
+			|| (nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Apply_D" && nodes[6].name=="Cheese" && nodes[7].name=="RemoveD" && nodes[8].name=="Stov_Of")
+			|| (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_Z" && nodes[5].name=="RemoveZ" && nodes[6].name=="Stov_Of")
+			|| (nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Apply_B" && nodes[7].name=="Cheese" && nodes[8].name=="Apply_B" && nodes[9].name=="RemoveB" && nodes[10].name=="Stov_Of"))
+				ReadNumbers.push_back(i+1);//0, 1, 2, 00, 11, 22
 			else if(nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_D" && nodes[5].name=="Cheese" && nodes[6].name=="RemoveD" && nodes[7].name=="Stov_Of"){
-				if (i!=3){
+				if (i!=3)
 					ReadNumbers.push_back(i+1);//01
-				}
-				else{
+				else
 					ReadNumbers.push_back(n_tasks-1);
-				}
 			}
 			else if(nodes[2].name=="Apply_B" && nodes[3].name=="Apply_B" && nodes[4].name=="RemoveB" && nodes[5].name=="Apply_D" && nodes[6].name=="Cheese" && nodes[7].name=="RemoveD" && nodes[8].name=="Stov_Of"){
-				if(i==2){
+				//make_02_edges
+				if(i==2)
 					ReadNumbers.push_back(i+4);
-				}
-				else if (i==4){
+				else if (i==4)
 					ReadNumbers.push_back(n_tasks-1);
-				}
 				else if (i==6){
 					ReadNumbers.push_back(i-3);
 					ReadNumbers.push_back(i+1);
 				}
-				else{
+				else
 					ReadNumbers.push_back(i+1);//02: type 0, then 2
 					//This one causes the critical path algo to mess up somehow, so I made it act like type 2,0 through earlier code
-				}
 			}
 			else if(nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Apply_Z" && nodes[6].name=="RemoveZ" && nodes[7].name=="Stov_Of"){
-				if (i!=4){
+				if (i!=4)
 					ReadNumbers.push_back(i+1);//10
-				}
-				else{
+				else
 					ReadNumbers.push_back(n_tasks-1);
-				}
-			}
-			else if(nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_Z" && nodes[5].name=="RemoveZ" && nodes[6].name=="Stov_Of"){
-				ReadNumbers.push_back(i+1);//11
 			}
 			else if(nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Apply_Z" && nodes[7].name=="RemoveZ" && nodes[8].name=="Stov_Of"){
-				if (i!=5){
+				if (i!=5)
 					ReadNumbers.push_back(i+1);//12: Type 1, then 2. Conditional looks more like the opposite (21), as do all the conditonals under this "else"
-				}
-				else{
+				else
 					ReadNumbers.push_back(n_tasks-1);
-				}
 			}
 			else if(nodes[2].name=="Apply_D" && nodes[3].name=="RemoveD" && nodes[4].name=="Apply_B" && nodes[5].name=="Cheese" && nodes[6].name=="Apply_B" && nodes[7].name=="RemoveB" && nodes[8].name=="Stov_Of"){
-				if(i==2){
+				//make_20_edges
+				if(i==2)
 					ReadNumbers.push_back(i+3);
-				}
-				else if (i==3){
+				else if (i==3)
 					ReadNumbers.push_back(n_tasks-1);
-				}
 				else if (i==5){
 					ReadNumbers.push_back(i-2);
 					ReadNumbers.push_back(i+1);
 				}
-				else{
+				else
 					ReadNumbers.push_back(i+1);//20: type 2, then 0
-				}
 			}
 			else if(nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_B" && nodes[5].name=="Cheese" && nodes[6].name=="Apply_B" && nodes[7].name=="RemoveB" && nodes[8].name=="Stov_Of"){
-				if (i!=3){
+				if (i!=3)
 					ReadNumbers.push_back(i+1);//21: Type 2, then 1. Conditional looks more like the opposite (12), as do all the conditonals under this "else"
-				}
-				else{
+				else
 					ReadNumbers.push_back(n_tasks-1);
-				}
-			}
-			else if(nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Apply_B" && nodes[7].name=="Cheese" && nodes[8].name=="Apply_B" && nodes[9].name=="RemoveB" && nodes[10].name=="Stov_Of"){
-				ReadNumbers.push_back(i+1);//22: Type 2, then 1. Conditional looks more like the opposite (12), as do all the conditonals under this "else"
 			}
 		}
+		//FCTN: fill_adj_pred
+		//Courtesy of https://github.com/suman95/Critical-path-management
+		//useless copying from RN to temp, I believe
 		vector<int> temp = ReadNumbers;
 		if(temp.size()==0){
 			adj[i].push_back(n_tasks);
@@ -228,9 +216,9 @@ int main() {
 		if(temp.size()!=0) {
 			for(int j=0; j<temp.size(); j++)
 				adj[i].push_back(temp[j]);
-			for(int j=0;j < temp.size(); j++){
-				if(temp[j]==temp.size()){
-						vector<int> yikes;
+			for(int j=0;j < temp.size(); j++){ //for the qty of successors in this iteration
+				if(temp[j]==temp.size()){ //if this node's number equals the # of successors in this iteration
+						vector<int> yikes; //2, 11, 20, 21, 22, maybe overkill
 						adj.push_back(yikes);
 						pred.push_back(yikes);
 				}
@@ -240,8 +228,11 @@ int main() {
 				f<<i<<" "<<temp[j]<<endl;
 			}
 		}
-	}
+		//Finish fill_adj_pred
+	}//finish big for loop
 	f<<"quit"<<endl;
+	//FCTN: debug_matrices (Maybe just delete this code)
+	//Courtesy of https://github.com/suman95/Critical-path-management
 	if(DBG) {
 		//debugging
 		cout<<"\nSuccessor matrix :\n";
@@ -263,6 +254,8 @@ int main() {
 		}
 	}
 
+	//FCTN: esef
+	//Courtesy of https://github.com/suman95/Critical-path-management
 	// calculating earliest start and finish times for each task
 	// topological sort of task is required here
 	stack<int> Stack;
@@ -271,13 +264,13 @@ int main() {
 
 	nodes[0].es = 0;
 	nodes[0].ef = 0;
-	Stack.pop();
+	Stack.pop(); //because all but one node have preds & sucs, we have one extra stack element
 
 	while(!Stack.empty()) {
 		top = Stack.top();
-		int max_f = -1;
+		int max_f = -1; //what?
 		for(int i = 0; i < pred[top].size(); i++) {
-			if(max_f < nodes[pred[top][i]].ef) {
+			if(max_f < nodes[pred[top][i]].ef) { //first p[0][i], then p[1][i], then p[4][i], etc
 				max_f = nodes[pred[top][i]].ef;
 			}
 		}
@@ -294,13 +287,14 @@ int main() {
 		}
 	}
 
+	//FCTN: lslf
+	//Courtesy of https://github.com/suman95/Critical-path-management
 	// calculating latest start and finish time for each task
-
 	stack<int> Stack2;
 	vector<bool> visit2(n_tasks+2, false);
 
 	topologicalSortUtil(n_tasks+1, visit2, Stack2, pred);
-
+	//pred starts from the back
 	nodes[n_tasks+1].ls = nodes[n_tasks+1].es;
 	nodes[n_tasks+1].lf = nodes[n_tasks+1].ef;
 	Stack2.pop();
@@ -324,15 +318,17 @@ int main() {
 			cout<<i<<" "<<nodes[i].name<<" "<<nodes[i].ls<<" "<<nodes[i].lf<<endl;
 		}
 	}
-
+	//FCTN: results_table
+	//Courtesy of https://github.com/suman95/Critical-path-management
 	cout<<"RESULTS : \n\n";
-	cout<<"\t#\tTask\tDur.\tEs\tEf\tLs\tLf\tST\n\n";
+	cout<<"\t#\tTask\tDur.\tES\tEF\tLS\tLF\tST\n\n";
 	for(int i = 0 ; i < n_tasks+2 ; i++) {
 		nodes[i].st = nodes[i].ls - nodes[i].es;
 		cout<<"\t"<<i<<"\t"<<nodes[i].name<<"\t"<<nodes[i].duration<<"\t"<<nodes[i].es<<"\t"<<nodes[i].ef<<"\t"<<nodes[i].ls<<"\t"<<nodes[i].lf<<"\t"<<nodes[i].st<<"\n\n";
 	}
 
-
+	//FCTN: critical_path
+	//Courtesy of https://github.com/suman95/Critical-path-management
 	// finding the critical path
 	// simple BFS can be done to find critical path
 	queue<int> q3;
@@ -367,7 +363,7 @@ int main() {
 
 void topologicalSortUtil(int v, vector<bool> &visited,  stack<int> &Stack, vector< vector<int> > &adj)
 {
-    visited[v] = true;
+    visited[v] = true; //Step 1: Make the visited node now true
 
     vector<int>::iterator i; //Points at memory address of STL container, often with numbers.
 		//Spares time & complexity.
@@ -383,7 +379,6 @@ Struct cpm_input(ofstream &f){
 	int n_tasks=0, items = 0, tweak = 0;
 	Struct super, fantastico;
 	f.open("plot_graph.plt");
-	cout<<"############## Critical Path management ################\n\n";
 	while (items<1){
 		cout<<"How many items will you be ordering today? ";
 		cin>>items;
@@ -397,7 +392,7 @@ Struct cpm_input(ofstream &f){
 
 	// input of all the tasks
 	for(int i = 1 ; i <= items; i++) {
-		cout<<"\n\nDish #"<<i<<" - Enter (0) for Pizza, (1) for Calzone, (2) for Grilled Cheese : ";
+		cout<<"\nDish #"<<i<<" - Enter (0) for Pizza, (1) for Calzone, (2) for Grilled Cheese : ";
 		std::string foodnumber;
 		std::cin >> foodnumber;
 
