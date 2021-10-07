@@ -8,16 +8,31 @@
 
 using namespace std;
 
+namespace CPMBegin
+{
+    class ObjectManager
+    {
+    public:
+			vector<string> name1;
+			vector<int> duration1;
+			int n_tasks;
+			int tweak;
+		  CPMBegin::ObjectManager cpm_input(ofstream &f);
+			CPMBegin::ObjectManager foodnodes(CPMBegin::ObjectManager super, string foodnumber, int tweak, vector<string> name1, vector<int> duration1, int n_tasks);
+    };
+}
+
+
 struct activity {
 	string name;
 	int duration;
 	int es, ef, ls, lf, st;  // earliest start time, earliest finish time, latest start time, latest finish time, slack time
 };
 
-std::string exec(const char* cmd) {
+string exec(const char* cmd) {
     char buffer[128];
-    std::string result = "";
-    std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
+    string result = "";
+    shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
     while (!feof(pipe.get())) {
         if (fgets(buffer, 128, pipe.get()) != NULL)
             result=result+buffer;
@@ -35,10 +50,9 @@ struct cpmStart {
 		int tweak;
 };
 
-typedef struct cpmStart Struct;
 typedef struct activity Struct1;
-Struct cpm_input(ofstream &f);
-Struct foodnodes(Struct super, string foodnumber, int tweak, vector<string> name1, vector<int> duration1, int n_tasks);
+CPMBegin::ObjectManager cpm_input(ofstream &f);
+CPMBegin::ObjectManager foodnodes(CPMBegin::ObjectManager super, string foodnumber, int tweak, vector<string> name1, vector<int> duration1, int n_tasks);
 Struct1* start_end_nodes(int n_tasks, Struct1 *nodes);
 
 int main() {
@@ -46,11 +60,10 @@ int main() {
 	int top=0;
 	ofstream f; //means by which we can open external files
 
-	Struct superduper;
-	superduper = cpm_input(f);
-	vector<string> name1 = superduper.name1;
-	vector<int> duration1 = superduper.duration1;
-	int n_tasks = superduper.n_tasks;
+	CPMBegin::ObjectManager cpm_input1 = cpm_input(f);
+	vector<string> name1 = cpm_input1.name1;
+	vector<int> duration1 = cpm_input1.duration1;
+	int n_tasks = cpm_input1.n_tasks;
 
 	Struct1 *nodes = new Struct1 [n_tasks+2];
 	nodes = start_end_nodes(n_tasks, nodes);
@@ -373,11 +386,13 @@ void topologicalSortUtil(int v, vector<bool> &visited,  stack<int> &Stack, vecto
     Stack.push(v);
 }
 
-Struct cpm_input(ofstream &f){
+CPMBegin::ObjectManager cpm_input(ofstream &f){
+	CPMBegin::ObjectManager cpm_input1;
 	vector<string> name1;
 	vector<int> duration1;
 	int n_tasks=0, items = 0, tweak = 0;
-	Struct super, fantastico;
+
+	CPMBegin::ObjectManager fantastico;
 	f.open("plot_graph.plt");
 	while (items<1){
 		cout<<"How many items will you be ordering today? ";
@@ -393,9 +408,7 @@ Struct cpm_input(ofstream &f){
 	// input of all the tasks
 	for(int i = 1 ; i <= items; i++) {
 		cout<<"\nDish #"<<i<<" - Enter (0) for Pizza, (1) for Calzone, (2) for Grilled Cheese : ";
-		std::string foodnumber;
-		std::cin >> foodnumber;
-
+		std::string foodnumber; std::cin >> foodnumber;
 		fantastico = foodnodes(fantastico, foodnumber, tweak, name1, duration1, n_tasks); //need to introduce int tweak
 		name1 = fantastico.name1; duration1 = fantastico.duration1;
 		n_tasks = fantastico.n_tasks;
@@ -414,13 +427,12 @@ Struct cpm_input(ofstream &f){
 	}
 	f<<"Start 0"<<endl;
 
-	super.name1 = name1;
-	super.duration1 = duration1;
-	super.n_tasks = n_tasks;
-	return super;
+	cpm_input1.name1 = name1; cpm_input1.duration1 = duration1; cpm_input1.n_tasks = n_tasks;
+	return cpm_input1;
 }
 
-Struct foodnodes(Struct fantastico, string foodnumber, int tweak, vector<string> name1, vector<int> duration1, int n_tasks){
+CPMBegin::ObjectManager foodnodes(CPMBegin::ObjectManager fantastico, string foodnumber, int tweak, vector<string> name1, vector<int> duration1, int n_tasks){
+	//cout<<"Hi"<<endl;
 	if (foodnumber == "0"){
 		tweak++;
 		name1.push_back("RemoveD"); duration1.push_back(2);
@@ -451,6 +463,7 @@ Struct foodnodes(Struct fantastico, string foodnumber, int tweak, vector<string>
 			name1.push_back("Apply_D"); duration1.push_back(1);
 		}
 	}
+
 	fantastico.name1 = name1; fantastico.duration1 = duration1;
 	fantastico.tweak = tweak;
 	fantastico.n_tasks = n_tasks;
