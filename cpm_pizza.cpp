@@ -19,17 +19,28 @@ namespace CPMBegin
 			int tweak;
 		  CPMBegin::ObjectManager cpm_input(ofstream &f);
 			CPMBegin::ObjectManager foodnodes(CPMBegin::ObjectManager super, string foodnumber, int tweak, vector<string> name1, vector<int> duration1, int n_tasks);
-    };
+			string name;
+			int duration;
+			int es, ef, ls, lf, st;
+			CPMBegin::ObjectManager* start_end_nodes(int n_tasks, CPMBegin::ObjectManager *nodes);
+			// This function vvv courtesy of https://github.com/suman95/Critical-path-management
+			void topologicalSortUtil(int v, vector<bool> &visited,  stack<int> &Stack, vector< vector<int> > &adj);
+			string exec(const char* cmd);
+			CPMBegin::ObjectManager* task_nodes(int n_tasks, vector<string> name1, vector<int> duration1, CPMBegin::ObjectManager *nodes);
+			int nodes_to_plot(ofstream &f, CPMBegin::ObjectManager *nodes, int n_tasks);
+			void tasks_print(CPMBegin::ObjectManager *nodes, int n_tasks);
+			vector< vector<int> > adj;
+			vector< vector<int> > pred;
+			CPMBegin::ObjectManager make_adj_pred(int n_tasks);
+			void debug_matrices(int n_tasks, vector< vector<int> > adj, vector< vector<int> > pred);
+			void results_table(int n_tasks, CPMBegin::ObjectManager *nodes);
+			void critical_path1(int n_tasks, CPMBegin::ObjectManager *nodes, vector<vector<int>> adj, ofstream &f);
+			CPMBegin::ObjectManager *nodes;
+			CPMBegin::ObjectManager lslf(int n_tasks, vector<vector<int>> adj, vector<vector<int>> pred, CPMBegin::ObjectManager *nodes);
+		};
 }
 
-
-struct activity {
-	string name;
-	int duration;
-	int es, ef, ls, lf, st;  // earliest start time, earliest finish time, latest start time, latest finish time, slack time
-};
-
-string exec(const char* cmd) {
+string CPMBegin::ObjectManager::exec(const char* cmd) {
     char buffer[128];
     string result = "";
     shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
@@ -40,35 +51,118 @@ string exec(const char* cmd) {
     return result;
 }
 
-// This function courtesy of https://github.com/suman95/Critical-path-management
-void topologicalSortUtil(int v, vector<bool> &visited,  stack<int> &Stack, vector< vector<int> > &adj);
+void CPMBegin::ObjectManager::topologicalSortUtil(int v, vector<bool> &visited,  stack<int> &Stack, vector< vector<int> > &adj)
+{
+    visited[v] = true; //Step 1: Make the visited node now true
+		CPMBegin::ObjectManager tsu;
+    vector<int>::iterator i; //Points at memory address of STL container, often with numbers.
+		//Spares time & complexity.
+    for (i = adj[v].begin(); i != adj[v].end(); ++i) //!= instead of <? Why? Because adj #s don't ascend, necessarily? i++ is same as ++i in this code's high level case
+        if (!visited[*i]) //if contents are still false | *i=CONTENTS!
+            tsu.topologicalSortUtil(*i, visited, Stack, adj); // *i is contents at element 1, and up
+    Stack.push(v);
+}
 
-struct cpmStart {
-    vector<string> name1;
-		vector<int> duration1;
-		int n_tasks;
-		int tweak;
-};
+CPMBegin::ObjectManager CPMBegin::ObjectManager::cpm_input(ofstream &f){
+	CPMBegin::ObjectManager cpm_input1;
+	vector<string> name1;
+	vector<int> duration1;
+	int n_tasks=0, items = 0, tweak = 0;
 
-typedef struct activity Struct1;
-CPMBegin::ObjectManager cpm_input(ofstream &f);
-CPMBegin::ObjectManager foodnodes(CPMBegin::ObjectManager super, string foodnumber, int tweak, vector<string> name1, vector<int> duration1, int n_tasks);
-Struct1* start_end_nodes(int n_tasks, Struct1 *nodes);
+	CPMBegin::ObjectManager fantastico;
+	f.open("plot_graph.plt");
+	while (items<1){
+		cout<<"How many items will you be ordering today? ";
+		cin>>items;
+	}
 
-int main() {
+	name1.push_back("Courier");
+	duration1.push_back(6);
+	name1.push_back("Stov_Of");
+	duration1.push_back(5);
+	n_tasks=2;
+
+	// input of all the tasks
+	for(int i = 1 ; i <= items; i++) {
+		cout<<"\nDish #"<<i<<" - Enter (0) for Pizza, (1) for Calzone, (2) for Grilled Cheese : ";
+		std::string foodnumber; std::cin >> foodnumber;
+		CPMBegin::ObjectManager fn;
+		fantastico = fn.foodnodes(fantastico, foodnumber, tweak, name1, duration1, n_tasks); //need to introduce int tweak
+		name1 = fantastico.name1; duration1 = fantastico.duration1;
+		n_tasks = fantastico.n_tasks;
+		tweak = fantastico.tweak;
+	}
+
+	name1.push_back("Stov_On");
+	duration1.push_back(7);
+	n_tasks++;
+
+	if (tweak==3){
+		f<<n_tasks-1<<endl;
+	}
+	else{
+		f<<n_tasks<<endl;
+	}
+	f<<"Start 0"<<endl;
+
+	cpm_input1.name1 = name1; cpm_input1.duration1 = duration1; cpm_input1.n_tasks = n_tasks;
+	return cpm_input1;
+}
+
+CPMBegin::ObjectManager CPMBegin::ObjectManager::foodnodes(CPMBegin::ObjectManager fantastico, string foodnumber, int tweak, vector<string> name1, vector<int> duration1, int n_tasks){
+	if (foodnumber == "0"){
+		tweak++;
+		name1.push_back("RemoveD"); duration1.push_back(2);
+		name1.push_back("Cheese"); duration1.push_back(4);
+		name1.push_back("Apply_D"); duration1.push_back(1);
+		n_tasks=n_tasks+3;
+	}
+	else if (foodnumber=="1"){
+		name1.push_back("RemoveZ"); duration1.push_back(2);
+		name1.push_back("Apply_Z"); duration1.push_back(3);
+		n_tasks=n_tasks+2;
+	}
+	else if (foodnumber=="2"){
+		if (tweak==1){
+			name1.pop_back(); duration1.pop_back();
+			name1.pop_back(); duration1.pop_back();
+			name1.pop_back(); duration1.pop_back();
+		}
+		tweak=tweak+2;
+		name1.push_back("RemoveB"); duration1.push_back(2);
+		name1.push_back("Apply_B"); duration1.push_back(8);
+		name1.push_back("Cheese"); duration1.push_back(4);
+		name1.push_back("Apply_B"); duration1.push_back(8);
+		n_tasks=n_tasks+4;
+		if (tweak==3){
+			name1.push_back("RemoveD"); duration1.push_back(2);
+			name1.push_back("Cheese"); duration1.push_back(4);
+			name1.push_back("Apply_D"); duration1.push_back(1);
+		}
+	}
+
+	fantastico.name1 = name1; fantastico.duration1 = duration1;
+	fantastico.tweak = tweak;
+	fantastico.n_tasks = n_tasks;
+	return fantastico;
+}
+
+CPMBegin::ObjectManager* CPMBegin::ObjectManager::start_end_nodes(int n_tasks, CPMBegin::ObjectManager *nodes){
+	nodes[0].name = "Start";
+	nodes[0].duration = 0;
+	if (n_tasks==10){
+		nodes[n_tasks].name = "Deliver";
+		nodes[n_tasks].duration = 0;
+		}
+	else{
+		nodes[n_tasks+1].name = "Deliver";
+		nodes[n_tasks+1].duration = 0;
+	}
+	return nodes;
+}
+
+CPMBegin::ObjectManager* CPMBegin::ObjectManager::task_nodes(int n_tasks, vector<string> name1, vector<int> duration1, CPMBegin::ObjectManager *nodes){
 	bool cheese_passed=false;
-	int top=0;
-	ofstream f; //means by which we can open external files
-
-	CPMBegin::ObjectManager cpm_input1 = cpm_input(f);
-	vector<string> name1 = cpm_input1.name1;
-	vector<int> duration1 = cpm_input1.duration1;
-	int n_tasks = cpm_input1.n_tasks;
-
-	Struct1 *nodes = new Struct1 [n_tasks+2];
-	nodes = start_end_nodes(n_tasks, nodes);
-
-	//FCTN: task_nodes
 	for (int i=1; i<=n_tasks; i++){
 			if (n_tasks==10){
 				if ((i==3 || i==4)&&name1.back()=="Cheese"){
@@ -90,9 +184,10 @@ int main() {
 		name1.pop_back();
 		duration1.pop_back();
 	}
+	return nodes;
+}
 
-	//FCTN: nodes_to_plt
-	//Courtesy of https://github.com/suman95/Critical-path-management
+int CPMBegin::ObjectManager::nodes_to_plot(ofstream &f, CPMBegin::ObjectManager *nodes, int n_tasks){
 	for (int i=1; i<=n_tasks; i++){
 		f<<nodes[i].name<<" "<<nodes[i].duration<<endl;
 	}
@@ -103,24 +198,141 @@ int main() {
 	else{
 		n_tasks--;
 	}
+	CPMBegin::ObjectManager fantastico1;
+	return n_tasks;
+}
 
-	//FCTN: tasks_print
-	//Courtesy of https://github.com/suman95/Critical-path-management
-	if (DBG){
+void CPMBegin::ObjectManager::tasks_print(CPMBegin::ObjectManager *nodes, int n_tasks){
+	if (DBG){ //Courtesy of https://github.com/suman95/Critical-path-management
 		cout<<"\n\n\t\tTasks entered :\n";
 		for(int i = 0 ; i <= n_tasks+1; i++) { //upper limit could be i < n_tasks+2, no?
 			cout<<"\t\t"<<i<<". "<<nodes[i].name<<" "<<nodes[i].duration<<endl;
 		}
 	}
+}
 
-	//FCTN: make_adj_pred
-	//Courtesy of https://github.com/suman95/Critical-path-management
+CPMBegin::ObjectManager CPMBegin::ObjectManager::make_adj_pred(int n_tasks){
 	vector< vector<int> > adj;  // adj represents sucessor list
 	vector< vector<int> > pred; // pred reperesents predecessor list
-	// initialization of both lists with empty vectors
 	for(int i = 0 ; i <= n_tasks; i++) {
 		vector<int> temp; adj.push_back(temp); pred.push_back(temp);
 	}
+	CPMBegin::ObjectManager adjpred; adjpred.adj=adj; adjpred.pred=pred;
+	return adjpred;
+}
+
+void CPMBegin::ObjectManager::debug_matrices(int n_tasks, vector<vector<int>> adj, vector< vector<int> > pred){
+	if(DBG) {
+		cout<<"\nSuccessor matrix :\n";
+		for(int i = 0 ; i < n_tasks+2; i++) {
+			cout<<i<<" : ";
+			for(int j = 0 ; j < adj[i].size(); j++) {
+				cout<<adj[i][j]<<"->";
+			}
+			cout<<endl;
+		}
+		cout<<"Predecessor matrix :\n";
+		for(int i = 0 ; i < n_tasks+2; i++) {
+			cout<<i<<" : ";
+			for(int j = 0 ; j < pred[i].size(); j++) {
+				cout<<pred[i][j]<<"->";
+			}
+			cout<<endl;
+		}
+	}
+}
+
+CPMBegin::ObjectManager CPMBegin::ObjectManager::lslf(int n_tasks, vector<vector<int>> adj, vector<vector<int>> pred, CPMBegin::ObjectManager *nodes){
+	// calculating latest start and finish time for each task
+	stack<int> Stack2;
+	vector<bool> visit2(n_tasks+2, false);
+	CPMBegin::ObjectManager tsu2;
+	tsu2.topologicalSortUtil(n_tasks+1, visit2, Stack2, pred);
+	//pred starts from the back
+	nodes[n_tasks+1].ls = nodes[n_tasks+1].es;
+	nodes[n_tasks+1].lf = nodes[n_tasks+1].ef;
+	Stack2.pop();
+	while(!Stack2.empty()) {
+		int top = Stack2.top();
+		int min_s = 99999;
+		for(int i = 0; i < adj[top].size(); i++) {
+			if(min_s > nodes[adj[top][i]].ls) {
+				min_s = nodes[adj[top][i]].ls;
+			}
+		}
+		nodes[top].lf = min_s;
+		nodes[top].ls = min_s - nodes[top].duration;
+		Stack2.pop();
+	}
+
+	if(DBG) {
+		cout<<"Ls and Lf : \n";
+		for(int i = 0 ; i < n_tasks+2; i++) {
+			cout<<i<<" "<<nodes[i].name<<" "<<nodes[i].ls<<" "<<nodes[i].lf<<endl;
+		}
+	}
+	CPMBegin::ObjectManager losreturnes;
+	losreturnes.nodes=nodes; losreturnes.n_tasks=n_tasks; losreturnes.adj=adj;
+	return losreturnes;
+}
+
+void CPMBegin::ObjectManager::results_table(int n_tasks, CPMBegin::ObjectManager *nodes){
+	cout<<"RESULTS : \n\n";
+	cout<<"\t#\tTask\tDur.\tES\tEF\tLS\tLF\tST\n\n";
+	for(int i = 0 ; i < n_tasks+2 ; i++) {
+		nodes[i].st = nodes[i].ls - nodes[i].es;
+		cout<<"\t"<<i<<"\t"<<nodes[i].name<<"\t"<<nodes[i].duration<<"\t"<<nodes[i].es<<"\t"<<nodes[i].ef<<"\t"<<nodes[i].ls<<"\t"<<nodes[i].lf<<"\t"<<nodes[i].st<<"\n\n";
+	}
+}
+
+void CPMBegin::ObjectManager::critical_path1(int n_tasks, CPMBegin::ObjectManager *nodes, vector<vector<int>> adj, ofstream &f){
+	//Courtesy of https://github.com/suman95/Critical-path-management
+	queue<int> q3;
+	vector<int> critical_path(n_tasks+2,0);
+	q3.push(0);
+	critical_path[0] = 1;
+	while(!q3.empty()) {
+		int top = q3.front();
+		q3.pop();
+		if(nodes[top].es == nodes[top].ls) {
+			critical_path[top] = 1;
+		}
+		for(int i = 0 ; i < adj[top].size(); i++) {
+				q3.push(adj[top][i]);
+		}
+	}
+	cout<<"Critical Path : ";
+	for(int i = 0 ; i < critical_path.size(); i++) {
+		if(critical_path[i]==1){
+		 cout<<nodes[i].name<<"->";
+		 f<<i<<" ";
+		}
+	}
+	cout<<endl;
+	f<<endl;
+	f.close();
+	CPMBegin::ObjectManager execut;
+	execut.exec("python3 plot_graph2.py < plot_graph.plt");
+	delete[] nodes;
+}
+
+int main() {
+	int top=0;
+	ofstream f; //means by which we can open external files
+	CPMBegin::ObjectManager jeff; //nonsense name
+	CPMBegin::ObjectManager cpm_input1 = jeff.cpm_input(f);
+	vector<string> name1 = cpm_input1.name1;
+	vector<int> duration1 = cpm_input1.duration1;
+	int n_tasks = cpm_input1.n_tasks;
+
+	CPMBegin::ObjectManager *nodes = new CPMBegin::ObjectManager [n_tasks+2];
+	nodes = jeff.start_end_nodes(n_tasks, nodes);
+	nodes=jeff.task_nodes(n_tasks, name1, duration1, nodes);
+	n_tasks=jeff.nodes_to_plot(f, nodes, n_tasks);
+	jeff.tasks_print(nodes, n_tasks);
+
+	CPMBegin::ObjectManager adjpred=jeff.make_adj_pred(n_tasks);
+	vector< vector<int> > adj=adjpred.adj; vector< vector<int> > pred=adjpred.pred;
 
 	//FCTN: make_edges
 	// initialization of successor list based on user input
@@ -164,9 +376,10 @@ int main() {
 			|| (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_Z" && nodes[5].name=="RemoveZ" && nodes[6].name=="Stov_Of")
 			|| (nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Apply_B" && nodes[7].name=="Cheese" && nodes[8].name=="Apply_B" && nodes[9].name=="RemoveB" && nodes[10].name=="Stov_Of"))
 				ReadNumbers.push_back(i+1);//0, 1, 2, 00, 11, 22
-			else if(nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_D" && nodes[5].name=="Cheese" && nodes[6].name=="RemoveD" && nodes[7].name=="Stov_Of"){
+			else if((nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_D" && nodes[5].name=="Cheese" && nodes[6].name=="RemoveD" && nodes[7].name=="Stov_Of")
+						|| (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_B" && nodes[5].name=="Cheese" && nodes[6].name=="Apply_B" && nodes[7].name=="RemoveB" && nodes[8].name=="Stov_Of")){
 				if (i!=3)
-					ReadNumbers.push_back(i+1);//01
+					ReadNumbers.push_back(i+1);//01 & 21
 				else
 					ReadNumbers.push_back(n_tasks-1);
 			}
@@ -209,12 +422,6 @@ int main() {
 				else
 					ReadNumbers.push_back(i+1);//20: type 2, then 0
 			}
-			else if(nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_B" && nodes[5].name=="Cheese" && nodes[6].name=="Apply_B" && nodes[7].name=="RemoveB" && nodes[8].name=="Stov_Of"){
-				if (i!=3)
-					ReadNumbers.push_back(i+1);//21: Type 2, then 1. Conditional looks more like the opposite (12), as do all the conditonals under this "else"
-				else
-					ReadNumbers.push_back(n_tasks-1);
-			}
 		}
 		//FCTN: fill_adj_pred
 		//Courtesy of https://github.com/suman95/Critical-path-management
@@ -244,36 +451,16 @@ int main() {
 		//Finish fill_adj_pred
 	}//finish big for loop
 	f<<"quit"<<endl;
-	//FCTN: debug_matrices (Maybe just delete this code)
-	//Courtesy of https://github.com/suman95/Critical-path-management
-	if(DBG) {
-		//debugging
-		cout<<"\nSuccessor matrix :\n";
-		for(int i = 0 ; i < n_tasks+2; i++) {
-			cout<<i<<" : ";
-			for(int j = 0 ; j < adj[i].size(); j++) {
-				cout<<adj[i][j]<<"->";
-			}
-			cout<<endl;
-		}
 
-		cout<<"Predecessor matrix :\n";
-		for(int i = 0 ; i < n_tasks+2; i++) {
-			cout<<i<<" : ";
-			for(int j = 0 ; j < pred[i].size(); j++) {
-				cout<<pred[i][j]<<"->";
-			}
-			cout<<endl;
-		}
-	}
-
+	jeff.CPMBegin::ObjectManager::debug_matrices(n_tasks, adj, pred);
 	//FCTN: esef
 	//Courtesy of https://github.com/suman95/Critical-path-management
 	// calculating earliest start and finish times for each task
 	// topological sort of task is required here
 	stack<int> Stack;
 	vector<bool> visit(n_tasks+2, false);
-	topologicalSortUtil(0,visit, Stack, adj);
+	CPMBegin::ObjectManager tsu1;
+	tsu1.topologicalSortUtil(0,visit, Stack, adj);
 
 	nodes[0].es = 0;
 	nodes[0].ef = 0;
@@ -300,186 +487,9 @@ int main() {
 		}
 	}
 
-	//FCTN: lslf
-	//Courtesy of https://github.com/suman95/Critical-path-management
-	// calculating latest start and finish time for each task
-	stack<int> Stack2;
-	vector<bool> visit2(n_tasks+2, false);
-
-	topologicalSortUtil(n_tasks+1, visit2, Stack2, pred);
-	//pred starts from the back
-	nodes[n_tasks+1].ls = nodes[n_tasks+1].es;
-	nodes[n_tasks+1].lf = nodes[n_tasks+1].ef;
-	Stack2.pop();
-	while(!Stack2.empty()) {
-		top = Stack2.top();
-		//cout<<"top "<<top<<endl;
-		int min_s = 99999;
-		for(int i = 0; i < adj[top].size(); i++) {
-			if(min_s > nodes[adj[top][i]].ls) {
-				min_s = nodes[adj[top][i]].ls;
-			}
-		}
-		nodes[top].lf = min_s;
-		nodes[top].ls = min_s - nodes[top].duration;
-		Stack2.pop();
-	}
-
-	if(DBG) {
-		cout<<"Ls and Lf : \n";
-		for(int i = 0 ; i < n_tasks+2; i++) {
-			cout<<i<<" "<<nodes[i].name<<" "<<nodes[i].ls<<" "<<nodes[i].lf<<endl;
-		}
-	}
-	//FCTN: results_table
-	//Courtesy of https://github.com/suman95/Critical-path-management
-	cout<<"RESULTS : \n\n";
-	cout<<"\t#\tTask\tDur.\tES\tEF\tLS\tLF\tST\n\n";
-	for(int i = 0 ; i < n_tasks+2 ; i++) {
-		nodes[i].st = nodes[i].ls - nodes[i].es;
-		cout<<"\t"<<i<<"\t"<<nodes[i].name<<"\t"<<nodes[i].duration<<"\t"<<nodes[i].es<<"\t"<<nodes[i].ef<<"\t"<<nodes[i].ls<<"\t"<<nodes[i].lf<<"\t"<<nodes[i].st<<"\n\n";
-	}
-
-	//FCTN: critical_path
-	//Courtesy of https://github.com/suman95/Critical-path-management
-	// finding the critical path
-	// simple BFS can be done to find critical path
-	queue<int> q3;
-	vector<int> critical_path(n_tasks+2,0);
-	q3.push(0);
-	critical_path[0] = 1;
-	while(!q3.empty()) {
-		top = q3.front();
-		q3.pop();
-		if(nodes[top].es == nodes[top].ls) {
-			critical_path[top] = 1;
-		}
-		for(int i = 0 ; i < adj[top].size(); i++) {
-				q3.push(adj[top][i]);
-		}
-	}
-
-	cout<<"Critical Path : ";
-	for(int i = 0 ; i < critical_path.size(); i++) {
-		if(critical_path[i]==1){
-		 cout<<nodes[i].name<<"->";
-		 f<<i<<" ";
-		}
-	}
-	cout<<endl;
-	f<<endl;
-	f.close();
-	exec("python3 plot_graph2.py < plot_graph.plt");
-	delete[] nodes;
+	CPMBegin::ObjectManager lslf1 = jeff.lslf(n_tasks, adj, pred, nodes);
+	n_tasks=lslf1.n_tasks; nodes=lslf1.nodes; adj=lslf1.adj;
+	jeff.results_table(n_tasks, nodes);
+	jeff.critical_path1(n_tasks, nodes, adj, f);
 	return 0;
-}
-
-void topologicalSortUtil(int v, vector<bool> &visited,  stack<int> &Stack, vector< vector<int> > &adj)
-{
-    visited[v] = true; //Step 1: Make the visited node now true
-
-    vector<int>::iterator i; //Points at memory address of STL container, often with numbers.
-		//Spares time & complexity.
-    for (i = adj[v].begin(); i != adj[v].end(); ++i) //!= instead of <? Why? Because adj #s don't ascend, necessarily? i++ is same as ++i in this code's high level case
-        if (!visited[*i]) //if contents are still false | *i=CONTENTS!
-            topologicalSortUtil(*i, visited, Stack, adj); // *i is contents at element 1, and up
-    Stack.push(v);
-}
-
-CPMBegin::ObjectManager cpm_input(ofstream &f){
-	CPMBegin::ObjectManager cpm_input1;
-	vector<string> name1;
-	vector<int> duration1;
-	int n_tasks=0, items = 0, tweak = 0;
-
-	CPMBegin::ObjectManager fantastico;
-	f.open("plot_graph.plt");
-	while (items<1){
-		cout<<"How many items will you be ordering today? ";
-		cin>>items;
-	}
-
-	name1.push_back("Courier");
-	duration1.push_back(6);
-	name1.push_back("Stov_Of");
-	duration1.push_back(5);
-	n_tasks=2;
-
-	// input of all the tasks
-	for(int i = 1 ; i <= items; i++) {
-		cout<<"\nDish #"<<i<<" - Enter (0) for Pizza, (1) for Calzone, (2) for Grilled Cheese : ";
-		std::string foodnumber; std::cin >> foodnumber;
-		fantastico = foodnodes(fantastico, foodnumber, tweak, name1, duration1, n_tasks); //need to introduce int tweak
-		name1 = fantastico.name1; duration1 = fantastico.duration1;
-		n_tasks = fantastico.n_tasks;
-		tweak = fantastico.tweak;
-	}
-
-	name1.push_back("Stov_On");
-	duration1.push_back(7);
-	n_tasks++;
-
-	if (tweak==3){
-		f<<n_tasks-1<<endl;
-	}
-	else{
-		f<<n_tasks<<endl;
-	}
-	f<<"Start 0"<<endl;
-
-	cpm_input1.name1 = name1; cpm_input1.duration1 = duration1; cpm_input1.n_tasks = n_tasks;
-	return cpm_input1;
-}
-
-CPMBegin::ObjectManager foodnodes(CPMBegin::ObjectManager fantastico, string foodnumber, int tweak, vector<string> name1, vector<int> duration1, int n_tasks){
-	//cout<<"Hi"<<endl;
-	if (foodnumber == "0"){
-		tweak++;
-		name1.push_back("RemoveD"); duration1.push_back(2);
-		name1.push_back("Cheese"); duration1.push_back(4);
-		name1.push_back("Apply_D"); duration1.push_back(1);
-		n_tasks=n_tasks+3;
-	}
-	else if (foodnumber=="1"){
-		name1.push_back("RemoveZ"); duration1.push_back(2);
-		name1.push_back("Apply_Z"); duration1.push_back(3);
-		n_tasks=n_tasks+2;
-	}
-	else if (foodnumber=="2"){
-		if (tweak==1){
-			name1.pop_back(); duration1.pop_back();
-			name1.pop_back(); duration1.pop_back();
-			name1.pop_back(); duration1.pop_back();
-		}
-		tweak=tweak+2;
-		name1.push_back("RemoveB"); duration1.push_back(2);
-		name1.push_back("Apply_B"); duration1.push_back(8);
-		name1.push_back("Cheese"); duration1.push_back(4);
-		name1.push_back("Apply_B"); duration1.push_back(8);
-		n_tasks=n_tasks+4;
-		if (tweak==3){
-			name1.push_back("RemoveD"); duration1.push_back(2);
-			name1.push_back("Cheese"); duration1.push_back(4);
-			name1.push_back("Apply_D"); duration1.push_back(1);
-		}
-	}
-
-	fantastico.name1 = name1; fantastico.duration1 = duration1;
-	fantastico.tweak = tweak;
-	fantastico.n_tasks = n_tasks;
-	return fantastico;
-}
-
-Struct1* start_end_nodes(int n_tasks, Struct1 *nodes){
-	nodes[0].name = "Start";
-	nodes[0].duration = 0;
-	if (n_tasks==10){
-		nodes[n_tasks].name = "Deliver";
-		nodes[n_tasks].duration = 0;
-		}
-	else{
-		nodes[n_tasks+1].name = "Deliver";
-		nodes[n_tasks+1].duration = 0;
-	}
-	return nodes;
 }
