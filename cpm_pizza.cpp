@@ -35,6 +35,7 @@ namespace CPMBegin
 			//vector<int> ReadNumbers;
 			CPMBegin::ObjectManager fill_adj_pred(vector<int> ReadNumbers, int n_tasks, int i, vector<vector<int>> adj, vector<vector<int>> pred, ofstream &f);
 			void debug_matrices(int n_tasks, vector<vector<int>> adj, vector< vector<int> > pred);
+      CPMBegin::ObjectManager make_edges(int n_tasks, CPMBegin::ObjectManager *nodes, vector<vector<int>> adj, vector<vector<int>> pred, ofstream &f);
 			void results_table(int n_tasks, CPMBegin::ObjectManager *nodes);
 			void critical_path1(int n_tasks, CPMBegin::ObjectManager *nodes, vector<vector<int>> adj, ofstream &f);
 			CPMBegin::ObjectManager *nodes;
@@ -373,6 +374,29 @@ void CPMBegin::ObjectManager::debug_matrices(int n_tasks, vector<vector<int>> ad
 	}
 }
 
+CPMBegin::ObjectManager CPMBegin::ObjectManager::make_edges(int n_tasks, CPMBegin::ObjectManager *nodes, vector<vector<int>> adj, vector<vector<int>> pred, ofstream &f){
+  CPMBegin::ObjectManager jeff;
+  for(int i = 0 ; i <= n_tasks; i++) {
+    vector<int> ReadNumbers;
+    if (i==1){
+      ReadNumbers=jeff.make_stov_on_edges (i, n_tasks, nodes, ReadNumbers);
+    }
+    else if (i==0 || i==n_tasks || i==n_tasks-1 || i==n_tasks-2){
+      ReadNumbers.push_back(i+1);
+    }
+    else{
+      ReadNumbers=jeff.easy_case(i, ReadNumbers, nodes);
+      ReadNumbers=jeff.other_cases(i, ReadNumbers, nodes, n_tasks);
+    }
+    CPMBegin::ObjectManager fadjpred = jeff.fill_adj_pred(ReadNumbers, n_tasks, i, adj, pred, f);
+    adj=fadjpred.adj; pred=fadjpred.pred;
+  }
+  f<<"quit"<<endl;
+  CPMBegin::ObjectManager bigret;
+  bigret.adj=adj; bigret.pred=pred;
+  return bigret;
+}
+
 CPMBegin::ObjectManager* CPMBegin::ObjectManager::esef(int n_tasks, vector<vector<int>> adj, CPMBegin::ObjectManager* nodes, vector<vector<int>> pred){
 	//Courtesy of https://github.com/suman95/Critical-path-management
 	stack<int> Stack;
@@ -405,7 +429,6 @@ CPMBegin::ObjectManager* CPMBegin::ObjectManager::esef(int n_tasks, vector<vecto
 }
 
 CPMBegin::ObjectManager CPMBegin::ObjectManager::lslf(int n_tasks, vector<vector<int>> adj, vector<vector<int>> pred, CPMBegin::ObjectManager *nodes){
-	// calculating latest start and finish time for each task
 	stack<int> Stack2;
 	vector<bool> visit2(n_tasks+2, false);
 	CPMBegin::ObjectManager tsu2;
@@ -418,15 +441,13 @@ CPMBegin::ObjectManager CPMBegin::ObjectManager::lslf(int n_tasks, vector<vector
 		int top = Stack2.top();
 		int min_s = 99999;
 		for(int i = 0; i < adj[top].size(); i++) {
-			if(min_s > nodes[adj[top][i]].ls) {
+			if(min_s > nodes[adj[top][i]].ls)
 				min_s = nodes[adj[top][i]].ls;
-			}
 		}
 		nodes[top].lf = min_s;
 		nodes[top].ls = min_s - nodes[top].duration;
 		Stack2.pop();
 	}
-
 	if(DBG) {
 		cout<<"Ls and Lf : \n";
 		for(int i = 0 ; i < n_tasks+2; i++) {
@@ -496,26 +517,8 @@ int main() {
 	CPMBegin::ObjectManager adjpred=jeff.make_adj_pred(n_tasks);
 	vector< vector<int> > adj=adjpred.adj; vector< vector<int> > pred=adjpred.pred;
 
-	//FCTN: make_edges
-	// initialization of successor list based on user input
-	// NOTE : User need to input all the tasks with no predecessors as the successor of "Start"
-	cout<<"\n\nNOTE : User need to input all the tasks with no predecessors as the successor of \"Start\"";
-	for(int i = 0 ; i <= n_tasks; i++) {
-		vector<int> ReadNumbers;
-		if (i==1){
-			ReadNumbers=jeff.make_stov_on_edges (i, n_tasks, nodes, ReadNumbers);
-		}
-		else if (i==0 || i==n_tasks || i==n_tasks-1 || i==n_tasks-2){
-			ReadNumbers.push_back(i+1);
-		}
-		else{
-			ReadNumbers=jeff.easy_case(i, ReadNumbers, nodes);
-      ReadNumbers=jeff.other_cases(i, ReadNumbers, nodes, n_tasks);
-		}
-		CPMBegin::ObjectManager fadjpred = jeff.fill_adj_pred(ReadNumbers, n_tasks, i, adj, pred, f);
-		adj=fadjpred.adj; pred=fadjpred.pred;
-	}//finish big for loop
-	f<<"quit"<<endl;
+	CPMBegin::ObjectManager rnpredadj = jeff.make_edges(n_tasks, nodes, adj, pred, f);
+  pred=rnpredadj.pred; adj=rnpredadj.adj;
 
 	jeff.debug_matrices(n_tasks, adj, pred);
 	nodes = jeff.esef(n_tasks, adj, nodes, pred);
