@@ -32,11 +32,20 @@ namespace CPMBegin
 			vector< vector<int> > adj;
 			vector< vector<int> > pred;
 			CPMBegin::ObjectManager make_adj_pred(int n_tasks);
-			void debug_matrices(int n_tasks, vector< vector<int> > adj, vector< vector<int> > pred);
+			//vector<int> ReadNumbers;
+			CPMBegin::ObjectManager fill_adj_pred(vector<int> ReadNumbers, int n_tasks, int i, vector<vector<int>> adj, vector<vector<int>> pred, ofstream &f);
+			void debug_matrices(int n_tasks, vector<vector<int>> adj, vector< vector<int> > pred);
 			void results_table(int n_tasks, CPMBegin::ObjectManager *nodes);
 			void critical_path1(int n_tasks, CPMBegin::ObjectManager *nodes, vector<vector<int>> adj, ofstream &f);
 			CPMBegin::ObjectManager *nodes;
+			CPMBegin::ObjectManager* esef(int n_tasks, vector<vector<int>> adj, CPMBegin::ObjectManager* nodes, vector<vector<int>> pred);
 			CPMBegin::ObjectManager lslf(int n_tasks, vector<vector<int>> adj, vector<vector<int>> pred, CPMBegin::ObjectManager *nodes);
+      vector<int> ReadNumbers;
+      vector<int> make_02_edges(int i, vector<int> ReadNumbers, int n_tasks);
+      vector<int> make_20_edges(int i, vector<int> ReadNumbers, int n_tasks);
+      vector<int> make_stov_on_edges (int i, int n_tasks, CPMBegin::ObjectManager* nodes, vector<int> ReadNumbers);
+      vector<int> easy_case(int i, vector<int> ReadNumbers, CPMBegin::ObjectManager *nodes);
+      vector<int> other_cases(int i, vector<int> ReadNumbers, CPMBegin::ObjectManager* nodes, int n_tasks);
 		};
 }
 
@@ -161,6 +170,48 @@ CPMBegin::ObjectManager* CPMBegin::ObjectManager::start_end_nodes(int n_tasks, C
 	return nodes;
 }
 
+vector<int> CPMBegin::ObjectManager::easy_case(int i, vector<int> ReadNumbers, CPMBegin::ObjectManager *nodes){
+  if ((nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Stov_Of")
+  || (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Stov_Of")
+  || (nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Stov_Of")
+  || (nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Apply_D" && nodes[6].name=="Cheese" && nodes[7].name=="RemoveD" && nodes[8].name=="Stov_Of")
+  || (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_Z" && nodes[5].name=="RemoveZ" && nodes[6].name=="Stov_Of")
+  || (nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Apply_B" && nodes[7].name=="Cheese" && nodes[8].name=="Apply_B" && nodes[9].name=="RemoveB" && nodes[10].name=="Stov_Of")){
+    ReadNumbers.push_back(i+1);//0, 1, 2, 00, 11, 22
+  }
+  return ReadNumbers;
+}
+
+vector<int> CPMBegin::ObjectManager::other_cases(int i, vector<int> ReadNumbers, CPMBegin::ObjectManager* nodes, int n_tasks){
+  CPMBegin::ObjectManager jeff;
+  if((nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_D" && nodes[5].name=="Cheese" && nodes[6].name=="RemoveD" && nodes[7].name=="Stov_Of")
+        || (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_B" && nodes[5].name=="Cheese" && nodes[6].name=="Apply_B" && nodes[7].name=="RemoveB" && nodes[8].name=="Stov_Of")){
+    if (i!=3)
+      ReadNumbers.push_back(i+1);//01 & 21
+    else
+      ReadNumbers.push_back(n_tasks-1);
+  }
+  else if(nodes[2].name=="Apply_B" && nodes[3].name=="Apply_B" && nodes[4].name=="RemoveB" && nodes[5].name=="Apply_D" && nodes[6].name=="Cheese" && nodes[7].name=="RemoveD" && nodes[8].name=="Stov_Of"){
+    ReadNumbers = jeff.make_02_edges(i, ReadNumbers, n_tasks);
+  }
+  else if(nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Apply_Z" && nodes[6].name=="RemoveZ" && nodes[7].name=="Stov_Of"){
+    if (i!=4)
+      ReadNumbers.push_back(i+1);//10
+    else
+      ReadNumbers.push_back(n_tasks-1);
+  }
+  else if(nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Apply_Z" && nodes[7].name=="RemoveZ" && nodes[8].name=="Stov_Of"){
+    if (i!=5)
+      ReadNumbers.push_back(i+1);//12: Type 1, then 2. Conditional looks more like the opposite (21), as do all the conditonals under this "else"
+    else
+      ReadNumbers.push_back(n_tasks-1);
+  }
+  else if(nodes[2].name=="Apply_D" && nodes[3].name=="RemoveD" && nodes[4].name=="Apply_B" && nodes[5].name=="Cheese" && nodes[6].name=="Apply_B" && nodes[7].name=="RemoveB" && nodes[8].name=="Stov_Of"){
+    ReadNumbers = jeff.make_20_edges(i, ReadNumbers, n_tasks);
+  }
+  return ReadNumbers;
+}
+
 CPMBegin::ObjectManager* CPMBegin::ObjectManager::task_nodes(int n_tasks, vector<string> name1, vector<int> duration1, CPMBegin::ObjectManager *nodes){
 	bool cheese_passed=false;
 	for (int i=1; i<=n_tasks; i++){
@@ -185,6 +236,29 @@ CPMBegin::ObjectManager* CPMBegin::ObjectManager::task_nodes(int n_tasks, vector
 		duration1.pop_back();
 	}
 	return nodes;
+}
+
+vector<int> CPMBegin::ObjectManager::make_stov_on_edges (int i, int n_tasks, CPMBegin::ObjectManager* nodes, vector<int>ReadNumbers){
+  for (int j=2; j<=n_tasks; j++){
+    if (nodes[j].name.find("Apply_") != string::npos){
+      if(ReadNumbers.size()>0){
+        if (ReadNumbers.size()==2){
+          if (nodes[ReadNumbers[0]].name!=nodes[j].name && nodes[ReadNumbers[1]].name!=nodes[j].name){
+            ReadNumbers.push_back(j);
+          }
+        }
+        else{
+          if (nodes[ReadNumbers[0]].name!=nodes[j].name){
+            ReadNumbers.push_back(j);
+          }
+        }
+      }
+      else{
+        ReadNumbers.push_back(j);
+      }
+    }
+  }
+  return ReadNumbers;
 }
 
 int CPMBegin::ObjectManager::nodes_to_plot(ofstream &f, CPMBegin::ObjectManager *nodes, int n_tasks){
@@ -221,6 +295,63 @@ CPMBegin::ObjectManager CPMBegin::ObjectManager::make_adj_pred(int n_tasks){
 	return adjpred;
 }
 
+vector<int> CPMBegin::ObjectManager::make_02_edges(int i, vector<int> ReadNumbers, int n_tasks){
+  if(i==2)
+    ReadNumbers.push_back(i+4);
+  else if (i==4)
+    ReadNumbers.push_back(n_tasks-1);
+  else if (i==6){
+    ReadNumbers.push_back(i-3);
+    ReadNumbers.push_back(i+1);
+  }
+  else
+    ReadNumbers.push_back(i+1);//02: type 0, then 2
+    //This one causes the critical path algo to mess up somehow, so I made it act like type 2,0 through earlier code
+  return ReadNumbers;
+}
+
+vector<int> CPMBegin::ObjectManager::make_20_edges(int i, vector<int> ReadNumbers, int n_tasks){
+  if(i==2)
+    ReadNumbers.push_back(i+3);
+  else if (i==3)
+    ReadNumbers.push_back(n_tasks-1);
+  else if (i==5){
+    ReadNumbers.push_back(i-2);
+    ReadNumbers.push_back(i+1);
+  }
+  else
+    ReadNumbers.push_back(i+1);//20: type 2, then 0
+  return ReadNumbers;
+}
+
+CPMBegin::ObjectManager CPMBegin::ObjectManager::fill_adj_pred(vector<int> ReadNumbers, int n_tasks, int i, vector<vector<int>> adj, vector<vector<int>> pred, ofstream &f){
+	//Courtesy of https://github.com/suman95/Critical-path-management
+	vector<int> temp = ReadNumbers;
+	if(temp.size()==0){
+		adj[i].push_back(n_tasks);
+		pred[n_tasks].push_back(i);
+		f<<i<<" "<<n_tasks<<endl;
+	}
+
+	if(temp.size()!=0) {
+		for(int j=0; j<temp.size(); j++)
+			adj[i].push_back(temp[j]);
+		for(int j=0;j < temp.size(); j++){ //for the qty of successors in this iteration
+			if(temp[j]==temp.size()){ //if this node's number equals the # of successors in this iteration
+					vector<int> yikes; //2, 11, 20, 21, 22, maybe overkill
+					adj.push_back(yikes);
+					pred.push_back(yikes);
+			}
+			pred[temp[j]].push_back(i);
+		}
+		for(int j=0;j<temp.size();j++){
+			f<<i<<" "<<temp[j]<<endl;
+		}
+	}
+	CPMBegin::ObjectManager fadjpred; fadjpred.adj=adj; fadjpred.pred=pred;
+	return fadjpred;
+}
+
 void CPMBegin::ObjectManager::debug_matrices(int n_tasks, vector<vector<int>> adj, vector< vector<int> > pred){
 	if(DBG) {
 		cout<<"\nSuccessor matrix :\n";
@@ -240,6 +371,37 @@ void CPMBegin::ObjectManager::debug_matrices(int n_tasks, vector<vector<int>> ad
 			cout<<endl;
 		}
 	}
+}
+
+CPMBegin::ObjectManager* CPMBegin::ObjectManager::esef(int n_tasks, vector<vector<int>> adj, CPMBegin::ObjectManager* nodes, vector<vector<int>> pred){
+	//Courtesy of https://github.com/suman95/Critical-path-management
+	stack<int> Stack;
+	vector<bool> visit(n_tasks+2, false);
+	CPMBegin::ObjectManager tsu1;
+	tsu1.topologicalSortUtil(0,visit, Stack, adj);
+	nodes[0].es = 0;
+	nodes[0].ef = 0;
+	Stack.pop(); //because all but one node have preds & sucs, we have one extra stack element
+	while(!Stack.empty()) {
+		int top = Stack.top();
+		int max_f = -1; //what?
+		for(int i = 0; i < pred[top].size(); i++) {
+			if(max_f < nodes[pred[top][i]].ef) { //first p[0][i], then p[1][i], then p[4][i], etc
+				max_f = nodes[pred[top][i]].ef;
+			}
+		}
+		nodes[top].es = max_f;
+		nodes[top].ef = max_f + nodes[top].duration;
+		Stack.pop();
+	}
+
+	if(DBG) {
+		cout<<"Es and Ef : \n";
+		for(int i = 0 ; i < n_tasks+2; i++) {
+			cout<<i<<" "<<nodes[i].name<<" "<<nodes[i].es<<" "<<nodes[i].ef<<endl;
+		}
+	}
+	return nodes;
 }
 
 CPMBegin::ObjectManager CPMBegin::ObjectManager::lslf(int n_tasks, vector<vector<int>> adj, vector<vector<int>> pred, CPMBegin::ObjectManager *nodes){
@@ -340,153 +502,23 @@ int main() {
 	cout<<"\n\nNOTE : User need to input all the tasks with no predecessors as the successor of \"Start\"";
 	for(int i = 0 ; i <= n_tasks; i++) {
 		vector<int> ReadNumbers;
-		//cout<<"\n\nEnter successors for task "<<nodes[i].name<<" : ";
-
 		if (i==1){
-			//FCTN: make_stov_on_edges
-			for (int j=2; j<=n_tasks; j++){
-				if (nodes[j].name.find("Apply_") != string::npos){
-					if(ReadNumbers.size()>0){
-						if (ReadNumbers.size()==2){
-							if (nodes[ReadNumbers[0]].name!=nodes[j].name && nodes[ReadNumbers[1]].name!=nodes[j].name){
-								ReadNumbers.push_back(j);
-							}
-						}
-						else{
-							if (nodes[ReadNumbers[0]].name!=nodes[j].name){
-								ReadNumbers.push_back(j);
-							}
-						}
-					}
-					else{
-						ReadNumbers.push_back(j);
-					}
-				}
-			}
+			ReadNumbers=jeff.make_stov_on_edges (i, n_tasks, nodes, ReadNumbers);
 		}
 		else if (i==0 || i==n_tasks || i==n_tasks-1 || i==n_tasks-2){
 			ReadNumbers.push_back(i+1);
 		}
 		else{
-			//FCTN: make_middle_nodes
-			if ((nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Stov_Of")
-			|| (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Stov_Of")
-			|| (nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Stov_Of")
-			|| (nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Apply_D" && nodes[6].name=="Cheese" && nodes[7].name=="RemoveD" && nodes[8].name=="Stov_Of")
-			|| (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_Z" && nodes[5].name=="RemoveZ" && nodes[6].name=="Stov_Of")
-			|| (nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Apply_B" && nodes[7].name=="Cheese" && nodes[8].name=="Apply_B" && nodes[9].name=="RemoveB" && nodes[10].name=="Stov_Of"))
-				ReadNumbers.push_back(i+1);//0, 1, 2, 00, 11, 22
-			else if((nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_D" && nodes[5].name=="Cheese" && nodes[6].name=="RemoveD" && nodes[7].name=="Stov_Of")
-						|| (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_B" && nodes[5].name=="Cheese" && nodes[6].name=="Apply_B" && nodes[7].name=="RemoveB" && nodes[8].name=="Stov_Of")){
-				if (i!=3)
-					ReadNumbers.push_back(i+1);//01 & 21
-				else
-					ReadNumbers.push_back(n_tasks-1);
-			}
-			else if(nodes[2].name=="Apply_B" && nodes[3].name=="Apply_B" && nodes[4].name=="RemoveB" && nodes[5].name=="Apply_D" && nodes[6].name=="Cheese" && nodes[7].name=="RemoveD" && nodes[8].name=="Stov_Of"){
-				//make_02_edges
-				if(i==2)
-					ReadNumbers.push_back(i+4);
-				else if (i==4)
-					ReadNumbers.push_back(n_tasks-1);
-				else if (i==6){
-					ReadNumbers.push_back(i-3);
-					ReadNumbers.push_back(i+1);
-				}
-				else
-					ReadNumbers.push_back(i+1);//02: type 0, then 2
-					//This one causes the critical path algo to mess up somehow, so I made it act like type 2,0 through earlier code
-			}
-			else if(nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Apply_Z" && nodes[6].name=="RemoveZ" && nodes[7].name=="Stov_Of"){
-				if (i!=4)
-					ReadNumbers.push_back(i+1);//10
-				else
-					ReadNumbers.push_back(n_tasks-1);
-			}
-			else if(nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Apply_Z" && nodes[7].name=="RemoveZ" && nodes[8].name=="Stov_Of"){
-				if (i!=5)
-					ReadNumbers.push_back(i+1);//12: Type 1, then 2. Conditional looks more like the opposite (21), as do all the conditonals under this "else"
-				else
-					ReadNumbers.push_back(n_tasks-1);
-			}
-			else if(nodes[2].name=="Apply_D" && nodes[3].name=="RemoveD" && nodes[4].name=="Apply_B" && nodes[5].name=="Cheese" && nodes[6].name=="Apply_B" && nodes[7].name=="RemoveB" && nodes[8].name=="Stov_Of"){
-				//make_20_edges
-				if(i==2)
-					ReadNumbers.push_back(i+3);
-				else if (i==3)
-					ReadNumbers.push_back(n_tasks-1);
-				else if (i==5){
-					ReadNumbers.push_back(i-2);
-					ReadNumbers.push_back(i+1);
-				}
-				else
-					ReadNumbers.push_back(i+1);//20: type 2, then 0
-			}
+			ReadNumbers=jeff.easy_case(i, ReadNumbers, nodes);
+      ReadNumbers=jeff.other_cases(i, ReadNumbers, nodes, n_tasks);
 		}
-		//FCTN: fill_adj_pred
-		//Courtesy of https://github.com/suman95/Critical-path-management
-		//useless copying from RN to temp, I believe
-		vector<int> temp = ReadNumbers;
-		if(temp.size()==0){
-			adj[i].push_back(n_tasks);
-			pred[n_tasks].push_back(i);
-			f<<i<<" "<<n_tasks<<endl;
-		}
-
-		if(temp.size()!=0) {
-			for(int j=0; j<temp.size(); j++)
-				adj[i].push_back(temp[j]);
-			for(int j=0;j < temp.size(); j++){ //for the qty of successors in this iteration
-				if(temp[j]==temp.size()){ //if this node's number equals the # of successors in this iteration
-						vector<int> yikes; //2, 11, 20, 21, 22, maybe overkill
-						adj.push_back(yikes);
-						pred.push_back(yikes);
-				}
-				pred[temp[j]].push_back(i);
-			}
-			for(int j=0;j<temp.size();j++){
-				f<<i<<" "<<temp[j]<<endl;
-			}
-		}
-		//Finish fill_adj_pred
+		CPMBegin::ObjectManager fadjpred = jeff.fill_adj_pred(ReadNumbers, n_tasks, i, adj, pred, f);
+		adj=fadjpred.adj; pred=fadjpred.pred;
 	}//finish big for loop
 	f<<"quit"<<endl;
 
-	jeff.CPMBegin::ObjectManager::debug_matrices(n_tasks, adj, pred);
-	//FCTN: esef
-	//Courtesy of https://github.com/suman95/Critical-path-management
-	// calculating earliest start and finish times for each task
-	// topological sort of task is required here
-	stack<int> Stack;
-	vector<bool> visit(n_tasks+2, false);
-	CPMBegin::ObjectManager tsu1;
-	tsu1.topologicalSortUtil(0,visit, Stack, adj);
-
-	nodes[0].es = 0;
-	nodes[0].ef = 0;
-	Stack.pop(); //because all but one node have preds & sucs, we have one extra stack element
-
-	while(!Stack.empty()) {
-		top = Stack.top();
-		int max_f = -1; //what?
-		for(int i = 0; i < pred[top].size(); i++) {
-			if(max_f < nodes[pred[top][i]].ef) { //first p[0][i], then p[1][i], then p[4][i], etc
-				max_f = nodes[pred[top][i]].ef;
-			}
-		}
-		nodes[top].es = max_f;
-		nodes[top].ef = max_f + nodes[top].duration;
-		Stack.pop();
-	}
-
-
-	if(DBG) {
-		cout<<"Es and Ef : \n";
-		for(int i = 0 ; i < n_tasks+2; i++) {
-			cout<<i<<" "<<nodes[i].name<<" "<<nodes[i].es<<" "<<nodes[i].ef<<endl;
-		}
-	}
-
+	jeff.debug_matrices(n_tasks, adj, pred);
+	nodes = jeff.esef(n_tasks, adj, nodes, pred);
 	CPMBegin::ObjectManager lslf1 = jeff.lslf(n_tasks, adj, pred, nodes);
 	n_tasks=lslf1.n_tasks; nodes=lslf1.nodes; adj=lslf1.adj;
 	jeff.results_table(n_tasks, nodes);
