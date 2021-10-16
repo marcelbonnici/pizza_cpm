@@ -5,6 +5,7 @@ This project takes a customer's order and generates an ordered list of when each
 I realized C++ was a language I needed to hone as a roboticist, so I left Python on the back burner (pun absolutely intended) to put my data structure and algorithm skills to the test. I also wanted to make something related to food automation, which is my hobby per my [LEGO vending machines on YouTube](youtube.com/astonishingstudios), and critical path management was the best concept to unite my software skills and pastime.
 
 ## Video Demonstration (to be filmed)
+[Video to Be Available Here](https://youtube.com/)
 [![Pizza Delivery Tracking](README-images/tbf.png)](https://youtube.com/)
 
 ## Getting Started
