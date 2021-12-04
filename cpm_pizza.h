@@ -9,7 +9,7 @@ namespace CPM_Class
 			int tweak;
 		  CPM_Class::ObjectManager take_users_order(ofstream &f);
 			CPM_Class::ObjectManager foodnodes(CPM_Class::ObjectManager super, string foodnumber, int tweak, vector<string> food_step_name, vector<int> food_step_duration, int number_of_tasks);
-      //CPM_Class::ObjectManager user_enters_food_numbers(int items, CPM_Class::ObjectManager food_step_details, int tweak, vector<string> food_step_name, vector<int> food_step_duration, int number_of_tasks, CPM_Class::ObjectManager fn);
+      CPM_Class::ObjectManager user_enters_food_numbers(int items, CPM_Class::ObjectManager food_step_details, int tweak, vector<string> food_step_name, vector<int> food_step_duration, int number_of_tasks, CPM_Class::ObjectManager fn);
       CPM_Class::ObjectManager take_users_order_cont(int tweak, int number_of_tasks, ofstream &f, vector<string> food_step_name, vector<int> food_step_duration);
 			string name;
 			int duration;

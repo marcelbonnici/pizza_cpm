@@ -63,21 +63,27 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::take_users_order(ofstream &f)
   int tweak = 0;
   // input of all the tasks
   CPM_Class::ObjectManager fn;
-	for(int i = 1 ; i <= items; i++) {
-		cout<<"\nDish #"<<i<<
+  food_step_details=fn.user_enters_food_numbers(items, food_step_details, tweak, food_step_name, food_step_duration, number_of_tasks, fn);
+  return fn.take_users_order_cont(food_step_details.tweak, food_step_details.number_of_tasks, f, food_step_details.food_step_name, food_step_details.food_step_duration);
+}
+
+CPM_Class::ObjectManager CPM_Class::ObjectManager::user_enters_food_numbers(int items, CPM_Class::ObjectManager food_step_details, int tweak, vector<string> food_step_name, vector<int> food_step_duration, int number_of_tasks, CPM_Class::ObjectManager fn)
+{
+  for(int i = 1 ; i <= items; i++) {
+    cout<<"\nDish #"<<i<<
     " - Enter (0) for Pizza, (1) for Calzone, (2) for Grilled Cheese : ";
-		std::string foodnumber; std::cin >> foodnumber;
+    std::string foodnumber; std::cin >> foodnumber;
 
-		food_step_details = fn.foodnodes(food_step_details, foodnumber, tweak, food_step_name, food_step_duration, number_of_tasks);
-		food_step_name = food_step_details.food_step_name;
+    food_step_details = fn.foodnodes(food_step_details, foodnumber, tweak, food_step_name, food_step_duration, number_of_tasks);
+    food_step_name = food_step_details.food_step_name;
     food_step_duration = food_step_details.food_step_duration;
-		number_of_tasks = food_step_details.number_of_tasks;
-		tweak = food_step_details.tweak;
-	}
+    number_of_tasks = food_step_details.number_of_tasks;
+    tweak = food_step_details.tweak;
+  }
 
-	food_step_name.push_back("TurnOn");
-	food_step_duration.push_back(7);
-  return fn.take_users_order_cont(tweak, number_of_tasks, f, food_step_name, food_step_duration);
+  food_step_details.food_step_name.push_back("TurnOn");
+  food_step_details.food_step_duration.push_back(7);
+  return food_step_details;
 }
 
 CPM_Class::ObjectManager CPM_Class::ObjectManager::take_users_order_cont
@@ -100,7 +106,10 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::take_users_order_cont
   return users_order;
 }
 
-CPM_Class::ObjectManager CPM_Class::ObjectManager::foodnodes(CPM_Class::ObjectManager food_step_details, string foodnumber, int tweak, vector<string> food_step_name, vector<int> food_step_duration, int number_of_tasks){
+CPM_Class::ObjectManager CPM_Class::ObjectManager::foodnodes(
+  CPM_Class::ObjectManager food_step_details, string foodnumber, int tweak,
+  vector<string> food_step_name, vector<int> food_step_duration,
+  int number_of_tasks){
 	if (foodnumber == "0"){
 		tweak++;
 		food_step_name.push_back("RemoveD"); food_step_duration.push_back(2);
