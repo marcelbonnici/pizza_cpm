@@ -1,40 +1,42 @@
-namespace CPMBegin
+namespace CPM_Class
 {
     class ObjectManager
     {
     public:
-			vector<string> name1;
-			vector<int> duration1;
-			int n_tasks;
+			vector<string> food_step_name;
+			vector<int> food_step_duration;
+			int number_of_tasks;
 			int tweak;
-		  CPMBegin::ObjectManager cpm_input(ofstream &f);
-			CPMBegin::ObjectManager foodnodes(CPMBegin::ObjectManager super, string foodnumber, int tweak, vector<string> name1, vector<int> duration1, int n_tasks);
+		  CPM_Class::ObjectManager take_users_order(ofstream &f);
+			CPM_Class::ObjectManager foodnodes(CPM_Class::ObjectManager super, string foodnumber, int tweak, vector<string> food_step_name, vector<int> food_step_duration, int number_of_tasks);
+      //CPM_Class::ObjectManager user_enters_food_numbers(int items, CPM_Class::ObjectManager food_step_details, int tweak, vector<string> food_step_name, vector<int> food_step_duration, int number_of_tasks, CPM_Class::ObjectManager fn);
+      CPM_Class::ObjectManager take_users_order_cont(int tweak, int number_of_tasks, ofstream &f, vector<string> food_step_name, vector<int> food_step_duration);
 			string name;
 			int duration;
 			int es, ef, ls, lf, st;
-			CPMBegin::ObjectManager* start_end_nodes(int n_tasks, CPMBegin::ObjectManager *nodes);
+			CPM_Class::ObjectManager* append_start_end_nodes(int number_of_tasks, CPM_Class::ObjectManager *nodes);
 			// This function vvv courtesy of https://github.com/suman95/Critical-path-management
-			void topologicalSortUtil(int v, vector<bool> &visited,  stack<int> &Stack, vector< vector<int> > &adj);
+			void topologicalSort(int v, vector<bool> &visited,  stack<int> &Stack, vector< vector<int> > &adj);
 			string exec(const char* cmd);
-			CPMBegin::ObjectManager* task_nodes(int n_tasks, vector<string> name1, vector<int> duration1, CPMBegin::ObjectManager *nodes);
-			int nodes_to_plot(ofstream &f, CPMBegin::ObjectManager *nodes, int n_tasks);
-			void tasks_print(CPMBegin::ObjectManager *nodes, int n_tasks);
+			CPM_Class::ObjectManager* align_names_to_durations(int number_of_tasks, vector<string> food_step_name, vector<int> food_step_duration, CPM_Class::ObjectManager *nodes);
+			int format_nodes_to_plot(ofstream &f, CPM_Class::ObjectManager *nodes, int number_of_tasks);
+			void print_tasks(CPM_Class::ObjectManager *nodes, int number_of_tasks);
 			vector< vector<int> > adj;
 			vector< vector<int> > pred;
-			CPMBegin::ObjectManager make_adj_pred(int n_tasks);
-			CPMBegin::ObjectManager fill_adj_pred(vector<int> ReadNumbers, int n_tasks, int i, vector<vector<int>> adj, vector<vector<int>> pred, ofstream &f);
-			void debug_matrices(int n_tasks, vector<vector<int>> adj, vector< vector<int> > pred);
-      CPMBegin::ObjectManager make_edges(int n_tasks, CPMBegin::ObjectManager *nodes, vector<vector<int>> adj, vector<vector<int>> pred, ofstream &f);
-			void results_table(int n_tasks, CPMBegin::ObjectManager *nodes);
-			void critical_path1(int n_tasks, CPMBegin::ObjectManager *nodes, vector<vector<int>> adj, ofstream &f);
-			CPMBegin::ObjectManager *nodes;
-			CPMBegin::ObjectManager* esef(int n_tasks, vector<vector<int>> adj, CPMBegin::ObjectManager* nodes, vector<vector<int>> pred);
-			CPMBegin::ObjectManager lslf(int n_tasks, vector<vector<int>> adj, vector<vector<int>> pred, CPMBegin::ObjectManager *nodes);
+			CPM_Class::ObjectManager make_adj_pred_vectors(int number_of_tasks);
+			CPM_Class::ObjectManager fill_adj_pred(vector<int> ReadNumbers, int number_of_tasks, int i, vector<vector<int>> adj, vector<vector<int>> pred, ofstream &f);
+			void debug_matrices(int number_of_tasks, vector<vector<int>> adj, vector< vector<int> > pred);
+      CPM_Class::ObjectManager make_edges(int number_of_tasks, CPM_Class::ObjectManager *nodes, vector<vector<int>> adj, vector<vector<int>> pred, ofstream &f);
+			void results_table(int number_of_tasks, CPM_Class::ObjectManager *nodes);
+			void the_critical_path(int number_of_tasks, CPM_Class::ObjectManager *nodes, vector<vector<int>> adj, ofstream &f);
+			CPM_Class::ObjectManager *nodes;
+			CPM_Class::ObjectManager* calculate_es_ef(int number_of_tasks, vector<vector<int>> adj, CPM_Class::ObjectManager* nodes, vector<vector<int>> pred);
+			CPM_Class::ObjectManager calculate_ls_lf(int number_of_tasks, vector<vector<int>> adj, vector<vector<int>> pred, CPM_Class::ObjectManager *nodes);
       vector<int> ReadNumbers;
-      vector<int> make_02_edges(int i, vector<int> ReadNumbers, int n_tasks);
-      vector<int> make_20_edges(int i, vector<int> ReadNumbers, int n_tasks);
-      vector<int> make_stov_on_edges (int i, int n_tasks, CPMBegin::ObjectManager* nodes, vector<int> ReadNumbers);
-      vector<int> easy_case(int i, vector<int> ReadNumbers, CPMBegin::ObjectManager *nodes);
-      vector<int> other_cases(int i, vector<int> ReadNumbers, CPMBegin::ObjectManager* nodes, int n_tasks);
+      vector<int> make_02_edges(int i, vector<int> ReadNumbers, int number_of_tasks);
+      vector<int> make_20_edges(int i, vector<int> ReadNumbers, int number_of_tasks);
+      vector<int> make_stov_on_edges (int i, int number_of_tasks, CPM_Class::ObjectManager* nodes, vector<int> ReadNumbers);
+      vector<int> easy_case(int i, vector<int> ReadNumbers, CPM_Class::ObjectManager *nodes);
+      vector<int> other_cases(int i, vector<int> ReadNumbers, CPM_Class::ObjectManager* nodes, int number_of_tasks);
 		};
 }
