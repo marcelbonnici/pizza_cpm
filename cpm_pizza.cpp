@@ -13,8 +13,6 @@ void CPM_Class::ObjectManager::exec(const char* cmd) {
   Transition from C++ process in the program to the Python process, for plotting
   cmd - Input plot file into plot maker via python
         "python3 plot_graph2.py < plot_graph.plt"
-  Returns:
-
   */
   char buffer[128];
   string result = "";
@@ -23,14 +21,19 @@ void CPM_Class::ObjectManager::exec(const char* cmd) {
       if (fgets(buffer, 128, pipe.get()) != NULL)
           result=result+buffer;
   }
-  //return result;
 }
 
-void CPM_Class::ObjectManager::topologicalSort(int node_number, vector<bool> &visited,  stack<int> &Stack, vector< vector<int> > &adj)
+void CPM_Class::ObjectManager::topologicalSort(int node_number,
+          vector<bool> &visited,  stack<int> &Stack, vector< vector<int> > &adj)
 {
     /*
     Linear ordering of vertices such that for every directed edge,
     the node at the tail comes before node at the head in the ordering
+
+    node_number - Node that we're visiting, to inspect its predecessors
+    visited - vector representing T/F for nodes that have(n't) been visited
+    Stack - Keeps track of visited nodes
+    adj - 2D vector containing node n's neighbors at n index
     */
     visited[node_number] = true; //Step 1: Make the visited node now true
 		CPM_Class::ObjectManager tsu;
@@ -45,8 +48,13 @@ void CPM_Class::ObjectManager::topologicalSort(int node_number, vector<bool> &vi
 CPM_Class::ObjectManager CPM_Class::ObjectManager::take_users_order(ofstream &f){
   /*
   Allow users to input the items they want and quantity
+  f - plot file that plot data is sent to
+
+  Returns:
+  users_order.food_step_name - Names of steps to fulfill order (ex: Add_Cheese)
+  users_order.food_step_duration - Duration of each task, in an int vector
+  users_order.number_of_tasks - Tallies the number of tasks
   */
-	//CPM_Class::ObjectManager users_order;
 	vector<string> food_step_name;
 	vector<int> food_step_duration;
 	int number_of_tasks=0, items = 0;
@@ -65,16 +73,33 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::take_users_order(ofstream &f)
 	number_of_tasks=2;
 
   int tweak = 0;
-  // input of all the tasks
+
   CPM_Class::ObjectManager fn;
   food_step_details=fn.user_enters_food_numbers(items, food_step_details, tweak, food_step_name, food_step_duration, number_of_tasks, fn);
   return fn.take_users_order_cont(food_step_details.tweak, food_step_details.number_of_tasks, f, food_step_details.food_step_name, food_step_details.food_step_duration);
 }
 
-CPM_Class::ObjectManager CPM_Class::ObjectManager::user_enters_food_numbers(int items, CPM_Class::ObjectManager food_step_details, int tweak, vector<string> food_step_name, vector<int> food_step_duration, int number_of_tasks, CPM_Class::ObjectManager fn)
+CPM_Class::ObjectManager CPM_Class::ObjectManager::user_enters_food_numbers(
+  int items, CPM_Class::ObjectManager food_step_details, int tweak,
+  vector<string> food_step_name, vector<int> food_step_duration,
+  int number_of_tasks, CPM_Class::ObjectManager fn)
 {
   /*
   Loop through asking which item they want, based on established quantity
+
+  items - Quantity of items user says they want to order
+  food_step_details -
+      To feature number_of_tasks, food_step_name, food_step_duration
+  food_step_name - Names of steps to fulfill order (ex: Add_Cheese)
+  tweak - A number used to handle cases where an order has 2+ unique items
+  food_step_duration - Duration of each task, in an int vector
+  number_of_tasks - Tally of steps needed to fulfill order
+  fn - Constructor to initialize the function
+
+  Returns:
+  food_step_details.food_step_name - Names of steps to fulfill order (updated)
+  food_step_details.food_step_duration - Duration of each task, in an int vector (updated)
+  food_step_details.number_of_tasks - Tally of steps needed to fulfill order (updated)
   */
   for(int i = 1 ; i <= items; i++) {
     cout<<"\nDish #"<<i<<
@@ -99,6 +124,16 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::take_users_order_cont
 {
   /*
   Continuation of 'take_users_order' to make function less lengthy
+
+  tweak - A number used to handle cases where an order has 2+ unique items
+  number_of_tasks - Tally of steps needed to fulfill order
+  f - Plot file that plot data is sent to
+  food_step_duration - Duration of each task, in an int vector
+
+  Returns:
+  users_order.food_step_name - Names of steps to fulfill order (updated)
+  users_order.food_step_duration - Duration of each task, in an int vector (updated)
+  users_order.number_of_tasks - Tally of steps needed to fulfill order (updated)
   */
   number_of_tasks++;
   if (tweak==3) { //tweak of 3 means someone ordered a pizza, which is handled differently
@@ -122,6 +157,14 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::foodnodes(
   int number_of_tasks){
     /*
     Add nodes that are exclusive to selected food item
+
+    food_step_details -
+        To feature number_of_tasks, food_step_name, food_step_duration
+    foodnumber - Item that user ordered (0/Pizza, 1/Calzone, 2/Grilled Cheese)
+    tweak - A number used to handle cases where an order has 2+ unique items
+    food_step_name - Names of steps to fulfill order
+    food_step_duration - Duration of each task, in an int vector
+    number_of_tasks - Tally of steps needed to fulfill order
     */
 	if (foodnumber == "0"){
 		tweak++;
@@ -160,8 +203,18 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::foodnodes(
 	return food_step_details;
 }
 
-CPM_Class::ObjectManager* CPM_Class::ObjectManager::append_start_end_nodes(int number_of_tasks, CPM_Class::ObjectManager *nodes){
-	nodes[0].name = "Start   ";
+CPM_Class::ObjectManager* CPM_Class::ObjectManager::append_start_end_nodes(
+  int number_of_tasks, CPM_Class::ObjectManager *nodes) {
+  /*
+  Sandwich physical steps between nodes that simply begin and end
+
+  number_of_tasks - # of steps to make order, which is pizza & grilled cheese @ 10
+  nodes - Object manager to match names with durations
+
+  Returns:
+  nodes - Updated nodes
+  */
+  nodes[0].name = "Start   ";
 	nodes[0].duration = 0;
 	if (number_of_tasks==10){
 		nodes[number_of_tasks].name = "Completed";
@@ -174,19 +227,44 @@ CPM_Class::ObjectManager* CPM_Class::ObjectManager::append_start_end_nodes(int n
 	return nodes;
 }
 
-vector<int> CPM_Class::ObjectManager::easy_case(int i, vector<int> ReadNumbers, CPM_Class::ObjectManager *nodes){
+vector<int> CPM_Class::ObjectManager::easy_case(int i, vector<int> ReadNumbers,
+  CPM_Class::ObjectManager *nodes){
+  /*
+  When there's only 1 unique food item, the nodes would form an asynchronous
+  plot. No need to rearrange nodes from how they're documented in nodes.
+
+  i - Iterator from other function, representing task number
+  ReadNumbers - vector of task numbers/nodes that has nodes in sequential order
+  nodes -  Object manager to match names with durations
+
+  Returns:
+  ReadNumbers - Now updated with order corresponding to newly-handled node
+  */
   if ((nodes[2].name=="Apply_Dough" && nodes[3].name=="Add_Cheese" && nodes[4].name=="Remove_Dough" && nodes[5].name=="Turn_Off")
   || (nodes[2].name=="Apply_Calzone" && nodes[3].name=="Remove_Calzone" && nodes[4].name=="Turn_Off")
   || (nodes[2].name=="Apply_Bread" && nodes[3].name=="Add_Cheese" && nodes[4].name=="Apply_Bread" && nodes[5].name=="Remove_Bread" && nodes[6].name=="Turn_Off")
   || (nodes[2].name=="Apply_Dough" && nodes[3].name=="Add_Cheese" && nodes[4].name=="Remove_Dough" && nodes[5].name=="Apply_Dough" && nodes[6].name=="Add_Cheese" && nodes[7].name=="Remove_Dough" && nodes[8].name=="Turn_Off")
   || (nodes[2].name=="Apply_Calzone" && nodes[3].name=="Remove_Calzone" && nodes[4].name=="Apply_Calzone" && nodes[5].name=="Remove_Calzone" && nodes[6].name=="Turn_Off")
   || (nodes[2].name=="Apply_Bread" && nodes[3].name=="Add_Cheese" && nodes[4].name=="Apply_Bread" && nodes[5].name=="Remove_Bread" && nodes[6].name=="Apply_Bread" && nodes[7].name=="Add_Cheese" && nodes[8].name=="Apply_Bread" && nodes[9].name=="Remove_Bread" && nodes[10].name=="Turn_Off")){
-    ReadNumbers.push_back(i+1);//0, 1, 2, 00, 11, 22
+    ReadNumbers.push_back(i+1);//0, 1, 2, 00, 11, 22. +1 per non-physical start node
   }
   return ReadNumbers;
 }
 
-vector<int> CPM_Class::ObjectManager::other_cases(int i, vector<int> ReadNumbers, CPM_Class::ObjectManager* nodes, int number_of_tasks){
+vector<int> CPM_Class::ObjectManager::other_cases(int i,
+  vector<int> ReadNumbers, CPM_Class::ObjectManager* nodes,
+  int number_of_tasks) {
+  /*
+  When there's 2+ unique food items, the nodes form a complex plot, that cannot
+  simply dump 'nodes' into 'ReadNumbers'. This handles the conversion.
+
+  i - Iterator from other function, representing task number
+  ReadNumbers - vector of task numbers/nodes that has nodes in sequential order
+  nodes -  Object manager to match names with durations
+
+  Returns:
+  ReadNumbers - Now updated with order corresponding to newly-handled node
+  */
   CPM_Class::ObjectManager CPM_obj;
   if((nodes[2].name=="Apply_Calzone" && nodes[3].name=="Remove_Calzone" && nodes[4].name=="Apply_Dough" && nodes[5].name=="Add_Cheese" && nodes[6].name=="Remove_Dough" && nodes[7].name=="Turn_Off")
         || (nodes[2].name=="Apply_Calzone" && nodes[3].name=="Remove_Calzone" && nodes[4].name=="Apply_Bread" && nodes[5].name=="Add_Cheese" && nodes[6].name=="Apply_Bread" && nodes[7].name=="Remove_Bread" && nodes[8].name=="Turn_Off")){
@@ -216,7 +294,9 @@ vector<int> CPM_Class::ObjectManager::other_cases(int i, vector<int> ReadNumbers
   return ReadNumbers;
 }
 
-CPM_Class::ObjectManager* CPM_Class::ObjectManager::align_names_to_durations(int number_of_tasks, vector<string> food_step_name, vector<int> food_step_duration, CPM_Class::ObjectManager *nodes){
+CPM_Class::ObjectManager* CPM_Class::ObjectManager::align_names_to_durations(
+  int number_of_tasks, vector<string> food_step_name,
+  vector<int> food_step_duration, CPM_Class::ObjectManager *nodes) {
 	bool cheese_passed=false;
 	for (int i=1; i<=number_of_tasks; i++){
 			if (number_of_tasks==10){
@@ -271,7 +351,7 @@ int CPM_Class::ObjectManager::format_nodes_to_plot(ofstream &f, CPM_Class::Objec
 	}
 
 	if(number_of_tasks!=10) {
-		f<<"Finish 0"<<endl;
+		f<<"Completed 0"<<endl;
 	}
 	else{
 		number_of_tasks--;
