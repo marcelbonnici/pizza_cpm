@@ -17,7 +17,7 @@ namespace CPM_Class
 			CPM_Class::ObjectManager* append_start_end_nodes(int number_of_tasks, CPM_Class::ObjectManager *nodes);
 			// This function vvv courtesy of https://github.com/suman95/Critical-path-management
 			void topologicalSort(int v, vector<bool> &visited,  stack<int> &Stack, vector< vector<int> > &adj);
-			string exec(const char* cmd);
+			void exec(const char* cmd);
 			CPM_Class::ObjectManager* align_names_to_durations(int number_of_tasks, vector<string> food_step_name, vector<int> food_step_duration, CPM_Class::ObjectManager *nodes);
 			int format_nodes_to_plot(ofstream &f, CPM_Class::ObjectManager *nodes, int number_of_tasks);
 			void print_tasks(CPM_Class::ObjectManager *nodes, int number_of_tasks);

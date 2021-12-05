@@ -8,9 +8,13 @@
 using namespace std;
 #include "cpm_pizza.h"
 
-string CPM_Class::ObjectManager::exec(const char* cmd) {
+void CPM_Class::ObjectManager::exec(const char* cmd) {
   /*
   Transition from C++ process in the program to the Python process, for plotting
+  cmd - Input plot file into plot maker via python
+        "python3 plot_graph2.py < plot_graph.plt"
+  Returns:
+
   */
   char buffer[128];
   string result = "";
@@ -19,7 +23,7 @@ string CPM_Class::ObjectManager::exec(const char* cmd) {
       if (fgets(buffer, 128, pipe.get()) != NULL)
           result=result+buffer;
   }
-  return result;
+  //return result;
 }
 
 void CPM_Class::ObjectManager::topologicalSort(int node_number, vector<bool> &visited,  stack<int> &Stack, vector< vector<int> > &adj)
@@ -54,9 +58,9 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::take_users_order(ofstream &f)
 		cin>>items;
 	}
 
-	food_step_name.push_back("Courier");
+	food_step_name.push_back("Deliverer");
 	food_step_duration.push_back(6);
-	food_step_name.push_back("TurnOff");
+	food_step_name.push_back("Turn_Off");
 	food_step_duration.push_back(5);
 	number_of_tasks=2;
 
@@ -69,6 +73,9 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::take_users_order(ofstream &f)
 
 CPM_Class::ObjectManager CPM_Class::ObjectManager::user_enters_food_numbers(int items, CPM_Class::ObjectManager food_step_details, int tweak, vector<string> food_step_name, vector<int> food_step_duration, int number_of_tasks, CPM_Class::ObjectManager fn)
 {
+  /*
+  Loop through asking which item they want, based on established quantity
+  */
   for(int i = 1 ; i <= items; i++) {
     cout<<"\nDish #"<<i<<
     " - Enter (0) for Pizza, (1) for Calzone, (2) for Grilled Cheese : ";
@@ -81,7 +88,7 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::user_enters_food_numbers(int 
     tweak = food_step_details.tweak;
   }
 
-  food_step_details.food_step_name.push_back("TurnOn");
+  food_step_details.food_step_name.push_back("Stove_On");
   food_step_details.food_step_duration.push_back(7);
   return food_step_details;
 }
@@ -90,7 +97,9 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::take_users_order_cont
           (int tweak, int number_of_tasks, ofstream &f,
           vector<string> food_step_name, vector<int> food_step_duration)
 {
-  CPM_Class::ObjectManager users_order;
+  /*
+  Continuation of 'take_users_order' to make function less lengthy
+  */
   number_of_tasks++;
   if (tweak==3) { //tweak of 3 means someone ordered a pizza, which is handled differently
     f<<number_of_tasks-1<<endl;
@@ -100,6 +109,7 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::take_users_order_cont
   }
   f<<"Start 0"<<endl;
 
+  CPM_Class::ObjectManager users_order;
   users_order.food_step_name = food_step_name;
   users_order.food_step_duration = food_step_duration;
   users_order.number_of_tasks = number_of_tasks;
@@ -110,16 +120,19 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::foodnodes(
   CPM_Class::ObjectManager food_step_details, string foodnumber, int tweak,
   vector<string> food_step_name, vector<int> food_step_duration,
   int number_of_tasks){
+    /*
+    Add nodes that are exclusive to selected food item
+    */
 	if (foodnumber == "0"){
 		tweak++;
-		food_step_name.push_back("RemoveD"); food_step_duration.push_back(2);
-		food_step_name.push_back("Cheese"); food_step_duration.push_back(4);
-		food_step_name.push_back("Apply_D"); food_step_duration.push_back(1);
+		food_step_name.push_back("Remove_Dough"); food_step_duration.push_back(2);
+		food_step_name.push_back("Add_Cheese"); food_step_duration.push_back(4);
+		food_step_name.push_back("Apply_Dough"); food_step_duration.push_back(1);
 		number_of_tasks=number_of_tasks+3;
 	}
 	else if (foodnumber=="1"){
-		food_step_name.push_back("RemoveZ"); food_step_duration.push_back(2);
-		food_step_name.push_back("Apply_Z"); food_step_duration.push_back(3);
+		food_step_name.push_back("Remove_Calzone"); food_step_duration.push_back(2);
+		food_step_name.push_back("Apply_Calzone"); food_step_duration.push_back(3);
 		number_of_tasks=number_of_tasks+2;
 	}
 	else if (foodnumber=="2"){
@@ -129,15 +142,15 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::foodnodes(
 			food_step_name.pop_back(); food_step_duration.pop_back();
 		}
 		tweak=tweak+2;
-		food_step_name.push_back("RemoveB"); food_step_duration.push_back(2);
-		food_step_name.push_back("Apply_B"); food_step_duration.push_back(8);
-		food_step_name.push_back("Cheese"); food_step_duration.push_back(4);
-		food_step_name.push_back("Apply_B"); food_step_duration.push_back(8);
+		food_step_name.push_back("Remove_Bread"); food_step_duration.push_back(2);
+		food_step_name.push_back("Apply_Bread"); food_step_duration.push_back(8);
+		food_step_name.push_back("Add_Cheese"); food_step_duration.push_back(4);
+		food_step_name.push_back("Apply_Bread"); food_step_duration.push_back(8);
 		number_of_tasks=number_of_tasks+4;
 		if (tweak==3){
-			food_step_name.push_back("RemoveD"); food_step_duration.push_back(2);
-			food_step_name.push_back("Cheese"); food_step_duration.push_back(4);
-			food_step_name.push_back("Apply_D"); food_step_duration.push_back(1);
+			food_step_name.push_back("Remove_Dough"); food_step_duration.push_back(2);
+			food_step_name.push_back("Add_Cheese"); food_step_duration.push_back(4);
+			food_step_name.push_back("Apply_Dough"); food_step_duration.push_back(1);
 		}
 	}
 
@@ -148,26 +161,26 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::foodnodes(
 }
 
 CPM_Class::ObjectManager* CPM_Class::ObjectManager::append_start_end_nodes(int number_of_tasks, CPM_Class::ObjectManager *nodes){
-	nodes[0].name = "Start";
+	nodes[0].name = "Start   ";
 	nodes[0].duration = 0;
 	if (number_of_tasks==10){
-		nodes[number_of_tasks].name = "Deliver";
+		nodes[number_of_tasks].name = "Completed";
 		nodes[number_of_tasks].duration = 0;
 		}
 	else{
-		nodes[number_of_tasks+1].name = "Deliver";
+		nodes[number_of_tasks+1].name = "Completed";
 		nodes[number_of_tasks+1].duration = 0;
 	}
 	return nodes;
 }
 
 vector<int> CPM_Class::ObjectManager::easy_case(int i, vector<int> ReadNumbers, CPM_Class::ObjectManager *nodes){
-  if ((nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="TurnOff")
-  || (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="TurnOff")
-  || (nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="TurnOff")
-  || (nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Apply_D" && nodes[6].name=="Cheese" && nodes[7].name=="RemoveD" && nodes[8].name=="TurnOff")
-  || (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_Z" && nodes[5].name=="RemoveZ" && nodes[6].name=="TurnOff")
-  || (nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Apply_B" && nodes[7].name=="Cheese" && nodes[8].name=="Apply_B" && nodes[9].name=="RemoveB" && nodes[10].name=="TurnOff")){
+  if ((nodes[2].name=="Apply_Dough" && nodes[3].name=="Add_Cheese" && nodes[4].name=="Remove_Dough" && nodes[5].name=="Turn_Off")
+  || (nodes[2].name=="Apply_Calzone" && nodes[3].name=="Remove_Calzone" && nodes[4].name=="Turn_Off")
+  || (nodes[2].name=="Apply_Bread" && nodes[3].name=="Add_Cheese" && nodes[4].name=="Apply_Bread" && nodes[5].name=="Remove_Bread" && nodes[6].name=="Turn_Off")
+  || (nodes[2].name=="Apply_Dough" && nodes[3].name=="Add_Cheese" && nodes[4].name=="Remove_Dough" && nodes[5].name=="Apply_Dough" && nodes[6].name=="Add_Cheese" && nodes[7].name=="Remove_Dough" && nodes[8].name=="Turn_Off")
+  || (nodes[2].name=="Apply_Calzone" && nodes[3].name=="Remove_Calzone" && nodes[4].name=="Apply_Calzone" && nodes[5].name=="Remove_Calzone" && nodes[6].name=="Turn_Off")
+  || (nodes[2].name=="Apply_Bread" && nodes[3].name=="Add_Cheese" && nodes[4].name=="Apply_Bread" && nodes[5].name=="Remove_Bread" && nodes[6].name=="Apply_Bread" && nodes[7].name=="Add_Cheese" && nodes[8].name=="Apply_Bread" && nodes[9].name=="Remove_Bread" && nodes[10].name=="Turn_Off")){
     ReadNumbers.push_back(i+1);//0, 1, 2, 00, 11, 22
   }
   return ReadNumbers;
@@ -175,29 +188,29 @@ vector<int> CPM_Class::ObjectManager::easy_case(int i, vector<int> ReadNumbers, 
 
 vector<int> CPM_Class::ObjectManager::other_cases(int i, vector<int> ReadNumbers, CPM_Class::ObjectManager* nodes, int number_of_tasks){
   CPM_Class::ObjectManager CPM_obj;
-  if((nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_D" && nodes[5].name=="Cheese" && nodes[6].name=="RemoveD" && nodes[7].name=="TurnOff")
-        || (nodes[2].name=="Apply_Z" && nodes[3].name=="RemoveZ" && nodes[4].name=="Apply_B" && nodes[5].name=="Cheese" && nodes[6].name=="Apply_B" && nodes[7].name=="RemoveB" && nodes[8].name=="TurnOff")){
+  if((nodes[2].name=="Apply_Calzone" && nodes[3].name=="Remove_Calzone" && nodes[4].name=="Apply_Dough" && nodes[5].name=="Add_Cheese" && nodes[6].name=="Remove_Dough" && nodes[7].name=="Turn_Off")
+        || (nodes[2].name=="Apply_Calzone" && nodes[3].name=="Remove_Calzone" && nodes[4].name=="Apply_Bread" && nodes[5].name=="Add_Cheese" && nodes[6].name=="Apply_Bread" && nodes[7].name=="Remove_Bread" && nodes[8].name=="Turn_Off")){
     if (i!=3)
       ReadNumbers.push_back(i+1);//01 & 21
     else
       ReadNumbers.push_back(number_of_tasks-1);
   }
-  else if(nodes[2].name=="Apply_B" && nodes[3].name=="Apply_B" && nodes[4].name=="RemoveB" && nodes[5].name=="Apply_D" && nodes[6].name=="Cheese" && nodes[7].name=="RemoveD" && nodes[8].name=="TurnOff"){
+  else if(nodes[2].name=="Apply_Bread" && nodes[3].name=="Apply_Bread" && nodes[4].name=="Remove_Bread" && nodes[5].name=="Apply_Dough" && nodes[6].name=="Add_Cheese" && nodes[7].name=="Remove_Dough" && nodes[8].name=="Turn_Off"){
     ReadNumbers = CPM_obj.make_02_edges(i, ReadNumbers, number_of_tasks);
   }
-  else if(nodes[2].name=="Apply_D" && nodes[3].name=="Cheese" && nodes[4].name=="RemoveD" && nodes[5].name=="Apply_Z" && nodes[6].name=="RemoveZ" && nodes[7].name=="TurnOff"){
+  else if(nodes[2].name=="Apply_Dough" && nodes[3].name=="Add_Cheese" && nodes[4].name=="Remove_Dough" && nodes[5].name=="Apply_Calzone" && nodes[6].name=="Remove_Calzone" && nodes[7].name=="Turn_Off"){
     if (i!=4)
       ReadNumbers.push_back(i+1);//10
     else
       ReadNumbers.push_back(number_of_tasks-1);
   }
-  else if(nodes[2].name=="Apply_B" && nodes[3].name=="Cheese" && nodes[4].name=="Apply_B" && nodes[5].name=="RemoveB" && nodes[6].name=="Apply_Z" && nodes[7].name=="RemoveZ" && nodes[8].name=="TurnOff"){
+  else if(nodes[2].name=="Apply_Bread" && nodes[3].name=="Add_Cheese" && nodes[4].name=="Apply_Bread" && nodes[5].name=="Remove_Bread" && nodes[6].name=="Apply_Calzone" && nodes[7].name=="Remove_Calzone" && nodes[8].name=="Turn_Off"){
     if (i!=5)
       ReadNumbers.push_back(i+1);//12: Type 1, then 2. Conditional looks more like the opposite (21), as do all the conditonals under this "else"
     else
       ReadNumbers.push_back(number_of_tasks-1);
   }
-  else if(nodes[2].name=="Apply_D" && nodes[3].name=="RemoveD" && nodes[4].name=="Apply_B" && nodes[5].name=="Cheese" && nodes[6].name=="Apply_B" && nodes[7].name=="RemoveB" && nodes[8].name=="TurnOff"){
+  else if(nodes[2].name=="Apply_Dough" && nodes[3].name=="Remove_Dough" && nodes[4].name=="Apply_Bread" && nodes[5].name=="Add_Cheese" && nodes[6].name=="Apply_Bread" && nodes[7].name=="Remove_Bread" && nodes[8].name=="Turn_Off"){
     ReadNumbers = CPM_obj.make_20_edges(i, ReadNumbers, number_of_tasks);
   }
   return ReadNumbers;
@@ -207,7 +220,7 @@ CPM_Class::ObjectManager* CPM_Class::ObjectManager::align_names_to_durations(int
 	bool cheese_passed=false;
 	for (int i=1; i<=number_of_tasks; i++){
 			if (number_of_tasks==10){
-				if ((i==3 || i==4)&&food_step_name.back()=="Cheese"){
+				if ((i==3 || i==4)&&food_step_name.back()=="Add_Cheese"){
 					cheese_passed=true;
 				}
 				else if(cheese_passed==true){
@@ -258,7 +271,7 @@ int CPM_Class::ObjectManager::format_nodes_to_plot(ofstream &f, CPM_Class::Objec
 	}
 
 	if(number_of_tasks!=10) {
-		f<<"Deliver 0"<<endl;
+		f<<"Finish 0"<<endl;
 	}
 	else{
 		number_of_tasks--;
@@ -451,10 +464,10 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::calculate_ls_lf(int number_of
 
 void CPM_Class::ObjectManager::results_table(int number_of_tasks, CPM_Class::ObjectManager *nodes){
 	cout<<"RESULTS : \n\n";
-	cout<<"\t#\tTask\tDur.\tES\tEF\tLS\tLF\tST\n\n";
+	cout<<"\t#\tTask\t\t\tDur.\tES\tEF\tLS\tLF\tST\n\n";
 	for(int i = 0 ; i < number_of_tasks+2 ; i++) {
 		nodes[i].st = nodes[i].ls - nodes[i].es;
-		cout<<"\t"<<i<<"\t"<<nodes[i].name<<"\t"<<nodes[i].duration<<"\t"<<nodes[i].es<<"\t"<<nodes[i].ef<<"\t"<<nodes[i].ls<<"\t"<<nodes[i].lf<<"\t"<<nodes[i].st<<"\n\n";
+		cout<<"\t"<<i<<"\t"<<nodes[i].name<<"\t\t"<<nodes[i].duration<<"\t"<<nodes[i].es<<"\t"<<nodes[i].ef<<"\t"<<nodes[i].ls<<"\t"<<nodes[i].lf<<"\t"<<nodes[i].st<<"\n\n";
 	}
 }
 
