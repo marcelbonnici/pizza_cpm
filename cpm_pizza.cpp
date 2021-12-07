@@ -12,7 +12,7 @@ void CPM_Class::ObjectManager::exec(const char* cmd) {
   /*
   Transition from C++ process in the program to the Python process, for plotting
   cmd - Input plot file into plot maker via python
-        "python3 plot_graph2.py < plot_graph.plt"
+        "python3 plot_graph.py < plot_graph.plt"
   */
   char buffer[128];
   string result = "";
@@ -73,7 +73,6 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::take_users_order(ofstream &f)
 	number_of_tasks=2;
 
   int tweak = 0;
-
   CPM_Class::ObjectManager fn;
   food_step_details=fn.user_enters_food_numbers(items, food_step_details, tweak, food_step_name, food_step_duration, number_of_tasks, fn);
   return fn.take_users_order_cont(food_step_details.tweak, food_step_details.number_of_tasks, f, food_step_details.food_step_name, food_step_details.food_step_duration);
@@ -136,8 +135,8 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::take_users_order_cont
   users_order.number_of_tasks - Tally of steps needed to fulfill order (updated)
   */
   number_of_tasks++;
-  if (tweak==3) { //tweak of 3 means someone ordered a pizza, which is handled differently
-    f<<number_of_tasks-1<<endl;
+  if (tweak==3) { //tweak of 3 means someone ordered a pizza & grilled cheese, which is handled differently
+    f<<number_of_tasks-1<<endl; //number_of_tasks is not 1 less, but it is 1 less in f
   }
   else {
     f<<number_of_tasks<<endl;
@@ -303,9 +302,9 @@ CPM_Class::ObjectManager* CPM_Class::ObjectManager::tasks_to_unique_nodes(
   only need it once when bread and dough are ready.
 
   number_of_tasks - # of steps to make order
-  food_step_name - Names of steps to fulfill order
+  food_step_name - Names of steps to make order (no Start or Completed)
   food_step_duration - Duration of each task, in an int vector
-  nodes - Converted food_step names & durations into unique nodes
+  nodes - Converted food_step names & durations; just Start & Complete atm
 
   Returns:
   nodes - uniquely named nodes, associated with their durations
@@ -349,7 +348,7 @@ vector<int> CPM_Class::ObjectManager::make_stov_on_edges (int i,
     ReadNumbers - Updated to store successor(s)
   */
   for (int j=2; j<=number_of_tasks; j++){
-    if (nodes[j].name.find("Apply_") != string::npos){
+    if (nodes[j].name.find("Apply_") != string::npos){ //is "Apply_" in the name?
       if(ReadNumbers.size()>0){
         if (ReadNumbers.size()==2){
           if (nodes[ReadNumbers[0]].name!=nodes[j].name &&
@@ -425,11 +424,8 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::make_succ_pred_vectors(
   Returns:
   succpred - successor and predecessor vectors
   */
-	vector<vector<int>> succ;  // succ represents sucessor list
-	vector<vector<int>> pred; // pred reperesents predecessor list
-	for(int i = 0 ; i <= number_of_tasks; i++) {
-		vector<int> temp; succ.push_back(temp); pred.push_back(temp);
-	}
+	vector<vector<int>> succ(number_of_tasks+1);  // succ represents sucessor list
+	vector<vector<int>> pred(number_of_tasks+1); // pred reperesents predecessor list
 	CPM_Class::ObjectManager succpred; succpred.succ=succ; succpred.pred=pred;
 	return succpred;
 }
@@ -471,11 +467,11 @@ vector<int> CPM_Class::ObjectManager::make_20_edges(int i,
   Returns:
   ReadNumbers -  Stores more successor(s)
   */
-  if(i==2)
+  if(i==2) //apply_dough -> add_cheese
     ReadNumbers.push_back(i+3);
-  else if (i==3)
+  else if (i==3) //remove_pizza -> Turn_Off
     ReadNumbers.push_back(number_of_tasks-1);
-  else if (i==5){
+  else if (i==5){ //cheese -> add_bread #2 and remove_pizza
     ReadNumbers.push_back(i-2);
     ReadNumbers.push_back(i+1);
   }
@@ -501,26 +497,25 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::fill_succ_pred(
   Returns:
   fsuccpred - The successor and predecessor vectors, but filled completely
   */
-	vector<int> temp = ReadNumbers;
-	if(temp.size()==0){
+	if(ReadNumbers.size()==0){
 		succ[i].push_back(number_of_tasks);
 		pred[number_of_tasks].push_back(i);
 		f<<i<<" "<<number_of_tasks<<endl;
 	}
 
-	if(temp.size()!=0) {
-		for(int j=0; j<temp.size(); j++)
-			succ[i].push_back(temp[j]);
-		for(int j=0;j < temp.size(); j++){ //for the qty of successors in this iteration
-			if(temp[j]==temp.size()){ //if this node's number equals the # of successors in this iteration
+	if(ReadNumbers.size()!=0) {
+		for(int j=0; j<ReadNumbers.size(); j++)
+			succ[i].push_back(ReadNumbers[j]);
+		for(int j=0;j < ReadNumbers.size(); j++){ //for the qty of successors in this iteration
+			if(ReadNumbers[j]==ReadNumbers.size()){ //if this node's number equals the # of successors in this iteration
 					vector<int> neighbors; //2, 11, 20, 21, 22, maybe overkill
 					succ.push_back(neighbors);
 					pred.push_back(neighbors);
 			}
-			pred[temp[j]].push_back(i);
+			pred[ReadNumbers[j]].push_back(i);
 		}
-		for(int j=0;j<temp.size();j++){
-			f<<i<<" "<<temp[j]<<endl;
+		for(int j=0;j<ReadNumbers.size();j++){
+			f<<i<<" "<<ReadNumbers[j]<<endl;
 		}
 	}
 	CPM_Class::ObjectManager fsuccpred; fsuccpred.succ=succ; fsuccpred.pred=pred;
@@ -538,18 +533,18 @@ void CPM_Class::ObjectManager::debug_matrices(int number_of_tasks,
     */
 	if(DBG) {
 		cout<<"\nSuccessor matrix :\n";
-		for(int i = 0 ; i < number_of_tasks+2; i++) {
+		for(int i = 0 ; i < number_of_tasks+1; i++) {
 			cout<<i<<" : ";
 			for(int j = 0 ; j < succ[i].size(); j++) {
-				cout<<succ[i][j]<<"->";
+				cout<<succ[i][j]<<", ";
 			}
 			cout<<endl;
 		}
 		cout<<"Predecessor matrix :\n";
-		for(int i = 0 ; i < number_of_tasks+2; i++) {
+		for(int i = 1 ; i < number_of_tasks+2; i++) {
 			cout<<i<<" : ";
 			for(int j = 0 ; j < pred[i].size(); j++) {
-				cout<<pred[i][j]<<"->";
+				cout<<pred[i][j]<<", ";
 			}
 			cout<<endl;
 		}
@@ -560,8 +555,8 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::make_edges(
   int number_of_tasks, CPM_Class::ObjectManager *nodes, vector<vector<int>> succ,
   vector<vector<int>> pred, ofstream &f) {
     /*
-    The function that orders all the nodes in 'ReadNumbers' in certain format
-    that converts to 2D vectors holding succ[essor] and pred[ecessor] nodes.
+    Stores a node's successors in 'ReadNumbers', then transfers that info to
+    fill 2D vectors holding succ[essor] and pred[ecessor] nodes.
 
     number_of_tasks - # of steps to make order
     nodes - Has task names & durations
@@ -614,7 +609,7 @@ CPM_Class::ObjectManager* CPM_Class::ObjectManager::calculate_es_ef(
 	stack<int> Stack;
 	vector<bool> visit(number_of_tasks+2, false);
 	CPM_Class::ObjectManager tsu;
-	tsu.topologicalSort(0,visit, Stack, succ);
+	tsu.topologicalSort(0, visit, Stack, succ); //Topologically sorted in stack
 	nodes[0].es = 0;
 	nodes[0].ef = 0;
 	Stack.pop(); //because all but one node have preds & sucs, we have one extra stack element
@@ -678,9 +673,9 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::calculate_ls_lf(
 			cout<<i<<" "<<nodes[i].name<<" "<<nodes[i].ls<<" "<<nodes[i].lf<<endl;
 		}
 	}
-	CPM_Class::ObjectManager losreturnes;
-	losreturnes.nodes=nodes; losreturnes.number_of_tasks=number_of_tasks; losreturnes.succ=succ;
-	return losreturnes;
+	CPM_Class::ObjectManager nodesandsucc;
+	nodesandsucc.nodes=nodes; nodesandsucc.number_of_tasks=number_of_tasks; nodesandsucc.succ=succ;
+	return nodesandsucc;
 }
 
 void CPM_Class::ObjectManager::results_table(int number_of_tasks,
@@ -710,20 +705,26 @@ void CPM_Class::ObjectManager::the_critical_path(int number_of_tasks,
   succ - Successors vector
   f - Plot file that nodes data is sent to
   */
-	queue<int> q3;
+	queue<int> q;
 	vector<int> critical_path(number_of_tasks+2,0);
-	q3.push(0);
+	q.push(0);
 	critical_path[0] = 1;
-	while(!q3.empty()) {
-		int top = q3.front();
-		q3.pop();
+
+	while(!q.empty()) {
+		int top = q.front();
+		q.pop();
 		if(nodes[top].es == nodes[top].ls) {
 			critical_path[top] = 1;
 		}
 		for(int i = 0 ; i < succ[top].size(); i++) {
-				q3.push(succ[top][i]);
+				q.push(succ[top][i]);
 		}
-	}
+  }/*
+  for (int i=0; i<number_of_tasks+2; ++i) {
+    if(nodes[i].es == nodes[i].ls) {
+			critical_path[i] = 1;
+		}
+  }*/ //Could jsut be this commented for loop instead of the above, but haven't tested all choices yet
 	cout<<"Critical Path : ";
 	for(int i = 0 ; i < critical_path.size(); i++) {
 		if(critical_path[i]==1){
@@ -735,7 +736,7 @@ void CPM_Class::ObjectManager::the_critical_path(int number_of_tasks,
 	f<<endl;
 	f.close();
 	CPM_Class::ObjectManager execut;
-	execut.exec("python3 plot_graph2.py < plot_graph.plt");
+	execut.exec("python3 plot_graph.py < plot_graph.plt");
 	delete[] nodes;
 }
 

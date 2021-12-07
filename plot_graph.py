@@ -3,7 +3,7 @@ from graphviz import Digraph
 
 def plot_layout():
 	plot = Digraph("Critical path")
-	plot.body.extend(['rankdir=LR', 'size="8,5"'])
+	plot.body.extend(['rankdir=LR', 'size="8,5"']) # max width and heigh of pic
 	plot.attr('node', shape='box')
 	number_of_tasks = int(input())
 	edge_list = []
