@@ -508,7 +508,7 @@ CPM_Class::ObjectManager CPM_Class::ObjectManager::fill_succ_pred(
 			succ[i].push_back(ReadNumbers[j]);
 		for(int j=0;j < ReadNumbers.size(); j++){ //for the qty of successors in this iteration
 			if(ReadNumbers[j]==ReadNumbers.size()){ //if this node's number equals the # of successors in this iteration
-					vector<int> neighbors; //2, 11, 20, 21, 22, maybe overkill
+					vector<int> neighbors;
 					succ.push_back(neighbors);
 					pred.push_back(neighbors);
 			}
@@ -724,7 +724,7 @@ void CPM_Class::ObjectManager::the_critical_path(int number_of_tasks,
     if(nodes[i].es == nodes[i].ls) {
 			critical_path[i] = 1;
 		}
-  }*/ //Could jsut be this commented for loop instead of the above, but haven't tested all choices yet
+  }*/ //Could just be this commented for loop instead of the above, but haven't tested all choices yet
 	cout<<"Critical Path : ";
 	for(int i = 0 ; i < critical_path.size(); i++) {
 		if(critical_path[i]==1){
