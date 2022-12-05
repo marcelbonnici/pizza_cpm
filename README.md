@@ -1,8 +1,7 @@
 # Critical Path Management for Pizza Delivery Tracking
 
-[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/moribots/spot_mini_mini/blob/spot/LICENSE)
-[![Open Source Love png2](https://camo.githubusercontent.com/60dcf2177b53824e7912a6adfb3ff5e318d14ae4/68747470733a2f2f6261646765732e66726170736f66742e636f6d2f6f732f76312f6f70656e2d736f757263652e706e673f763d313033)](https://github.com/moribots)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-no-red.svg)](https://github.com/moribots/spot_mini_mini/graphs/commit-activity)
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)]()
+[![Open Source Love png2](https://camo.githubusercontent.com/60dcf2177b53824e7912a6adfb3ff5e318d14ae4/68747470733a2f2f6261646765732e66726170736f66742e636f6d2f6f732f76312f6f70656e2d736f757263652e706e673f763d313033)](https://github.com/marcelbonnici)
 
 This project takes a customer's order and generates an ordered list of when each ingredient will be assembled. Best of all, the program estimates the delivery time based on the longest path of steps from start to finish, called the critical path.
 ![Activity-On-Node Diagram Pizza & Calzone](README-images/pizza_calzone.jpg)
